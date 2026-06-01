@@ -1,6 +1,6 @@
 services:
   tiltfrenzy:
-    image: ghcr.io/hallveticapro/tiltfrenzy:latest
+    image: ${TILTFRENZY_IMAGE:-tiltfrenzy:latest}
     build:
       context: .
     container_name: tiltfrenzy

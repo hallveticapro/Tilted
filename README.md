@@ -85,15 +85,19 @@ updating the image does not remove a user's decks on that same browser and site 
 
 The GitHub Actions workflow in `.github/workflows/publish-container.yml` publishes multi-platform
 images to GitHub Container Registry after a push to `main`, a `v*` tag, or a manual workflow run.
-For this repository, the expected image is:
+Replace `<github-owner>` with the GitHub account or organization that owns your repository:
 
 ```text
-ghcr.io/hallveticapro/tiltfrenzy:latest
+ghcr.io/<github-owner>/tiltfrenzy:latest
 ```
 
-The workflow also publishes the branch name, Git tag, and commit SHA as image tags. If the
-repository is pushed under another GitHub account or organization, update the image path in
-`docker-compose.yml`; the workflow image path follows the GitHub repository automatically.
+The workflow also publishes the branch name, Git tag, and commit SHA as image tags. Its image
+path follows the GitHub repository automatically. To run the published image with Compose
+instead of building locally:
+
+```bash
+TILTFRENZY_IMAGE=ghcr.io/<github-owner>/tiltfrenzy:latest docker compose up -d
+```
 
 ## Run on Unraid
 
@@ -101,7 +105,7 @@ Create a new Docker container in Unraid with these values:
 
 | Setting | Value |
 | --- | --- |
-| Repository | `ghcr.io/hallveticapro/tiltfrenzy:latest` |
+| Repository | `ghcr.io/<github-owner>/tiltfrenzy:latest` |
 | Container port | `8080` |
 | Host port | Any available port, such as `8080` |
 | Network type | Your usual reverse-proxy-compatible network |
