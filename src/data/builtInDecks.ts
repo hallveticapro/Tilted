@@ -1,0 +1,126 @@
+import type { Card, Deck, Difficulty } from "../types";
+
+type SeedCard = Omit<Card, "id">;
+
+function makeCards(deckId: string, cards: SeedCard[]): Card[] {
+  return cards.map((card, index) => ({
+    ...card,
+    id: `${deckId}-${index + 1}`,
+  }));
+}
+
+function term(
+  prompt: string,
+  answer: string,
+  category: string,
+  difficulty: Difficulty = "medium",
+): SeedCard {
+  return { prompt, answer, category, difficulty };
+}
+
+export const builtInDecks: Deck[] = [
+  {
+    id: "math-review",
+    name: "4th Grade Math Review",
+    description: "Facts, fractions, place value, and problem-solving vocabulary.",
+    builtIn: true,
+    cards: makeCards("math", [
+      term("7 x 8", "56", "Multiplication facts", "easy"),
+      term("9 x 6", "54", "Multiplication facts", "easy"),
+      term("48 ÷ 6", "8", "Division facts", "easy"),
+      term("72 ÷ 9", "8", "Division facts", "easy"),
+      term("A number that divides evenly into another number", "Factor", "Factors"),
+      term("The product of a number and any whole number", "Multiple", "Multiples"),
+      term("A number with exactly two factors", "Prime number", "Prime/composite"),
+      term("A number with more than two factors", "Composite number", "Prime/composite"),
+      term("The space inside a two-dimensional shape", "Area", "Area and perimeter"),
+      term("The distance around a shape", "Perimeter", "Area and perimeter"),
+      term("The top number in a fraction", "Numerator", "Fractions"),
+      term("The bottom number in a fraction", "Denominator", "Fractions"),
+      term("The value of a digit based on its position", "Place value", "Place value"),
+      term("The answer to a multiplication problem", "Product", "Multiplication vocabulary"),
+      term("The answer to a division problem", "Quotient", "Word problem vocabulary"),
+      term("A word that often tells you to subtract", "Difference", "Word problem vocabulary"),
+      term("A word that often tells you to add", "Sum", "Word problem vocabulary"),
+      term("A number that is multiplied by another number", "Factor", "Multiplication vocabulary"),
+    ]),
+  },
+  {
+    id: "science-review",
+    name: "4th Grade Science Review",
+    description: "Matter, energy, forces, Earth science, and investigation terms.",
+    builtIn: true,
+    cards: makeCards("science", [
+      term("Anything that has mass and takes up space", "Matter", "Properties of matter"),
+      term("The amount of matter in an object", "Mass", "Properties of matter"),
+      term("Matter with a definite shape and volume", "Solid", "Properties of matter", "easy"),
+      term("Matter with a definite volume but no definite shape", "Liquid", "Properties of matter"),
+      term("Matter with no definite shape or volume", "Gas", "Properties of matter"),
+      term("Matter is not created or destroyed during a change", "Conservation of mass", "Matter"),
+      term("The area around a magnet where its force can act", "Magnetic field", "Magnets"),
+      term("The two ends of a magnet", "Poles", "Magnets", "easy"),
+      term("Energy stored in an object because of its position", "Potential energy", "Forms of energy"),
+      term("Energy an object has because it is moving", "Kinetic energy", "Forms of energy"),
+      term("A push or a pull", "Force", "Force and motion", "easy"),
+      term("A change in an object's position", "Motion", "Force and motion", "easy"),
+      term("Breaking rock into smaller pieces", "Weathering", "Weathering and erosion"),
+      term("Moving weathered material to a new place", "Erosion", "Weathering and erosion"),
+      term("Earth's path around the Sun", "Orbit", "Earth and space"),
+      term("A test used to answer a scientific question", "Experiment", "Investigation vocabulary"),
+      term("Information collected during an investigation", "Data", "Investigation vocabulary"),
+      term("A possible explanation that can be tested", "Hypothesis", "Investigation vocabulary"),
+    ]),
+  },
+  {
+    id: "classroom-fun",
+    name: "Fun/Classroom Safe",
+    description: "Animals, activities, food, sports, and silly actions.",
+    builtIn: true,
+    cards: makeCards("fun", [
+      term("Penguin", "Penguin", "Animals", "easy"),
+      term("Octopus", "Octopus", "Animals", "easy"),
+      term("Giraffe", "Giraffe", "Animals", "easy"),
+      term("Roller coaster", "Roller coaster", "Vacation", "easy"),
+      term("Castle fireworks", "Castle fireworks", "Vacation"),
+      term("Water slide", "Water slide", "Vacation", "easy"),
+      term("Backpack", "Backpack", "School objects", "easy"),
+      term("Pencil sharpener", "Pencil sharpener", "School objects", "easy"),
+      term("Soccer", "Soccer", "Sports", "easy"),
+      term("Basketball", "Basketball", "Sports", "easy"),
+      term("Tacos", "Tacos", "Food", "easy"),
+      term("Spaghetti", "Spaghetti", "Food", "easy"),
+      term("Walk like a robot", "Walk like a robot", "Silly actions", "easy"),
+      term("Pretend the floor is lava", "Pretend the floor is lava", "Silly actions"),
+      term("Dance in slow motion", "Dance in slow motion", "Silly actions"),
+      term("Invisible jump rope", "Invisible jump rope", "Silly actions"),
+      term("Build a blanket fort", "Build a blanket fort", "Activities"),
+      term("Sing in the shower", "Sing in the shower", "Activities"),
+    ]),
+  },
+  {
+    id: "vocabulary",
+    name: "Vocabulary",
+    description: "A classroom-friendly mix of grade-appropriate vocabulary.",
+    builtIn: true,
+    cards: makeCards("vocab", [
+      term("To look at how things are alike and different", "Compare", "Academic vocabulary"),
+      term("To tell how two things are different", "Contrast", "Academic vocabulary"),
+      term("To explain the meaning of something", "Define", "Academic vocabulary"),
+      term("A conclusion based on evidence and reasoning", "Inference", "Reading"),
+      term("The main message or lesson in a story", "Theme", "Reading"),
+      term("The person telling a story", "Narrator", "Reading"),
+      term("A statement that can be proven true", "Fact", "Reading"),
+      term("A personal belief or judgment", "Opinion", "Reading"),
+      term("To expect something based on clues", "Predict", "Academic vocabulary"),
+      term("To give a short version of the important ideas", "Summarize", "Academic vocabulary"),
+      term("A result that happens because of an event", "Effect", "Academic vocabulary"),
+      term("The reason something happens", "Cause", "Academic vocabulary"),
+      term("A group of sentences about one main idea", "Paragraph", "Writing"),
+      term("A word with the opposite meaning", "Antonym", "Language"),
+      term("A word with the same or similar meaning", "Synonym", "Language"),
+      term("The feeling created by a piece of writing", "Mood", "Reading"),
+      term("Careful and exact", "Precise", "General vocabulary"),
+      term("To change or improve something", "Revise", "Writing"),
+    ]),
+  },
+];

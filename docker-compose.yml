@@ -1,0 +1,11 @@
+services:
+  tiltfrenzy:
+    image: ghcr.io/hallveticapro/tiltfrenzy:latest
+    build:
+      context: .
+    container_name: tiltfrenzy
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
