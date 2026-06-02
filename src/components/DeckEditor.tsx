@@ -1,10 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { builtInDecks } from "../data/builtInDecks";
 import {
   cardsFromLines,
+  clearCustomDeckRecovery,
   copyDeck,
   createDeck,
   exportDeck,
+  getCustomDeckRecovery,
   importDeck,
   saveCustomDecks,
 } from "../services/deckStorage";
@@ -22,12 +24,21 @@ interface DeckEditorProps {
 const ALL_CATEGORIES = "All";
 
 function downloadJson(deck: Deck): void {
-  const blob = new Blob([exportDeck(deck)], { type: "application/json" });
+  downloadText(
+    exportDeck(deck),
+    `${deck.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "tilted-deck"}.json`,
+  );
+}
+
+function downloadText(text: string, filename: string): void {
+  const blob = new Blob([text], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `${deck.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.json`;
+  link.download = filename;
+  document.body.append(link);
   link.click();
+  link.remove();
   URL.revokeObjectURL(url);
 }
 
@@ -36,6 +47,10 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
   const [lineImport, setLineImport] = useState("");
   const [jsonImport, setJsonImport] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [deletedCard, setDeletedCard] = useState<{ card: Card; index: number } | null>(null);
+  const [hasRecovery, setHasRecovery] = useState(() => getCustomDeckRecovery() !== null);
+  const persistTimeoutRef = useRef<number | null>(null);
+  const pendingDecksRef = useRef<Deck[] | null>(null);
   const starterCategories = useMemo(
     () =>
       Array.from(
@@ -59,21 +74,71 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
     [customDecks, selectedDeckId],
   );
 
-  const commitDecks = (decks: Deck[]) => {
+  const clearPersistTimeout = () => {
+    if (persistTimeoutRef.current !== null) {
+      window.clearTimeout(persistTimeoutRef.current);
+      persistTimeoutRef.current = null;
+    }
+  };
+
+  const persistDecks = (decks: Deck[]) => {
     try {
       const saved = saveCustomDecks(decks);
       onDecksChange(saved);
+      pendingDecksRef.current = null;
       setError(null);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "This deck could not be saved.");
     }
   };
 
-  const updateSelectedDeck = (partial: Partial<Deck>) => {
+  const commitDecks = (decks: Deck[]) => {
+    clearPersistTimeout();
+    pendingDecksRef.current = null;
+    persistDecks(decks);
+  };
+
+  const scheduleDecks = (decks: Deck[]) => {
+    onDecksChange(decks);
+    pendingDecksRef.current = decks;
+    clearPersistTimeout();
+    persistTimeoutRef.current = window.setTimeout(() => {
+      persistTimeoutRef.current = null;
+      persistDecks(decks);
+    }, 350);
+  };
+
+  const flushDecks = () => {
+    clearPersistTimeout();
+    if (pendingDecksRef.current) {
+      persistDecks(pendingDecksRef.current);
+    }
+  };
+
+  useEffect(
+    () => () => {
+      clearPersistTimeout();
+      if (pendingDecksRef.current) {
+        try {
+          saveCustomDecks(pendingDecksRef.current);
+        } catch {
+          // Invalid in-progress edits remain visible until the user corrects them.
+        }
+      }
+    },
+    [],
+  );
+
+  const updateSelectedDeck = (partial: Partial<Deck>, deferred = false) => {
     if (!selectedDeck) {
       return;
     }
-    commitDecks(customDecks.map((deck) => (deck.id === selectedDeck.id ? { ...deck, ...partial } : deck)));
+    const decks = customDecks.map((deck) => (deck.id === selectedDeck.id ? { ...deck, ...partial } : deck));
+    if (deferred) {
+      scheduleDecks(decks);
+    } else {
+      commitDecks(decks);
+    }
   };
 
   const addDeck = () => {
@@ -89,7 +154,7 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
   };
 
   const deleteDeck = () => {
-    if (!selectedDeck) {
+    if (!selectedDeck || !window.confirm(`Delete "${selectedDeck.name}"? This cannot be undone.`)) {
       return;
     }
     const remaining = customDecks.filter((deck) => deck.id !== selectedDeck.id);
@@ -111,7 +176,23 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
       setError("A deck needs at least one card.");
       return;
     }
-    updateSelectedDeck({ cards: selectedDeck.cards.filter((card) => card.id !== cardId) });
+    const index = selectedDeck.cards.findIndex((card) => card.id === cardId);
+    const card = selectedDeck.cards[index];
+    if (!card) {
+      return;
+    }
+    setDeletedCard({ card, index });
+    updateSelectedDeck({ cards: selectedDeck.cards.filter((candidate) => candidate.id !== cardId) });
+  };
+
+  const undoDeleteCard = () => {
+    if (!selectedDeck || !deletedCard) {
+      return;
+    }
+    const cards = [...selectedDeck.cards];
+    cards.splice(deletedCard.index, 0, deletedCard.card);
+    updateSelectedDeck({ cards });
+    setDeletedCard(null);
   };
 
   const addCard = () => {
@@ -124,13 +205,17 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
   };
 
   const importLines = () => {
-    const cards = cardsFromLines(lineImport);
-    if (!selectedDeck || cards.length === 0) {
-      setError("Paste at least one non-empty line.");
-      return;
+    try {
+      const cards = cardsFromLines(lineImport);
+      if (!selectedDeck || cards.length === 0) {
+        setError("Paste at least one non-empty line.");
+        return;
+      }
+      updateSelectedDeck({ cards: [...selectedDeck.cards, ...cards] });
+      setLineImport("");
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Those cards could not be imported.");
     }
-    updateSelectedDeck({ cards: [...selectedDeck.cards, ...cards] });
-    setLineImport("");
   };
 
   const importJson = () => {
@@ -144,17 +229,49 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
     }
   };
 
+  const downloadRecovery = () => {
+    const recovery = getCustomDeckRecovery();
+    if (recovery) {
+      downloadText(recovery, "tilted-custom-decks-recovery.json");
+    }
+  };
+
+  const discardRecovery = () => {
+    clearCustomDeckRecovery();
+    setHasRecovery(false);
+  };
+
   return (
     <ScreenLayout
       title="Deck Workshop"
       eyebrow="Make review your own"
       actions={
-        <button className="button button--ghost" type="button" onClick={onBack}>
+        <button
+          className="button button--ghost"
+          type="button"
+          onClick={() => {
+            flushDecks();
+            onBack();
+          }}
+        >
           Done
         </button>
       }
     >
       {error && <p className="notice notice--warning">{error}</p>}
+      {hasRecovery && (
+        <section className="notice notice--warning recovery-notice">
+          <p>A malformed custom-deck backup was preserved. Download it before discarding it.</p>
+          <div className="button-row">
+            <button className="button button--secondary button--small" type="button" onClick={downloadRecovery}>
+              Download recovery backup
+            </button>
+            <button className="button button--ghost button--small" type="button" onClick={discardRecovery}>
+              Discard backup
+            </button>
+          </div>
+        </section>
+      )}
       <section className="editor-layout">
         <aside className="editor-sidebar panel">
           <div className="section-heading">
@@ -204,14 +321,14 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
                   <span className="field-label">Deck name</span>
                   <input
                     value={selectedDeck.name}
-                    onChange={(event) => updateSelectedDeck({ name: event.target.value })}
+                    onChange={(event) => updateSelectedDeck({ name: event.target.value }, true)}
                   />
                 </label>
                 <label>
                   <span className="field-label">Optional category</span>
                   <input
                     value={selectedDeck.category ?? ""}
-                    onChange={(event) => updateSelectedDeck({ category: event.target.value })}
+                    onChange={(event) => updateSelectedDeck({ category: event.target.value }, true)}
                   />
                 </label>
                 <div className="button-row">
@@ -230,19 +347,39 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
                     Add card
                   </button>
                 </div>
+                {deletedCard && (
+                  <div className="notice notice--warning undo-notice">
+                    <span>Deleted "{deletedCard.card.prompt}".</span>
+                    <button className="button button--small button--secondary" type="button" onClick={undoDeleteCard}>
+                      Undo
+                    </button>
+                  </div>
+                )}
                 {selectedDeck.cards.map((card) => (
                   <article className="card-editor panel" key={card.id}>
                     <label>
                       <span className="field-label">Prompt</span>
-                      <input value={card.prompt} onChange={(event) => updateCard(card.id, { prompt: event.target.value })} />
+                      <input value={card.prompt} onChange={(event) => updateSelectedDeck({
+                        cards: selectedDeck.cards.map((candidate) =>
+                          candidate.id === card.id ? { ...candidate, prompt: event.target.value } : candidate,
+                        ),
+                      }, true)} />
                     </label>
                     <label>
                       <span className="field-label">Optional hint</span>
-                      <input value={card.answer ?? ""} onChange={(event) => updateCard(card.id, { answer: event.target.value })} />
+                      <input value={card.answer ?? ""} onChange={(event) => updateSelectedDeck({
+                        cards: selectedDeck.cards.map((candidate) =>
+                          candidate.id === card.id ? { ...candidate, answer: event.target.value } : candidate,
+                        ),
+                      }, true)} />
                     </label>
                     <label>
                       <span className="field-label">Category</span>
-                      <input value={card.category ?? ""} onChange={(event) => updateCard(card.id, { category: event.target.value })} />
+                      <input value={card.category ?? ""} onChange={(event) => updateSelectedDeck({
+                        cards: selectedDeck.cards.map((candidate) =>
+                          candidate.id === card.id ? { ...candidate, category: event.target.value } : candidate,
+                        ),
+                      }, true)} />
                     </label>
                     <label>
                       <span className="field-label">Difficulty</span>

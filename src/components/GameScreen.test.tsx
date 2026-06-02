@@ -20,6 +20,8 @@ const settings: RoundSettings = {
   motionEnabled: false,
   reverseTilt: false,
   tiltThreshold: 25,
+  soundEnabled: true,
+  vibrationEnabled: true,
 };
 
 describe("GameScreen", () => {
@@ -100,6 +102,22 @@ describe("GameScreen", () => {
 
     expect(onRoundEnd.mock.calls[0][0].passedCards).toEqual([deck.cards[0]]);
     vi.useRealTimers();
+  });
+
+  it("respects muted sound feedback", () => {
+    render(
+      <GameScreen
+        deck={deck}
+        settings={{ ...settings, soundEnabled: false }}
+        motionStatus="off"
+        motionAction={null}
+        onRoundEnd={vi.fn()}
+        onQuit={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /correct/i }));
+    expect(playOutcomeSound).not.toHaveBeenCalled();
   });
 
   it("hides fallback buttons for active motion until the menu is opened", () => {

@@ -65,6 +65,7 @@ export function GameScreen({
   const finishedRef = useRef(false);
   const handledMotionActionRef = useRef(0);
   const feedbackTimeoutRef = useRef<number | null>(null);
+  const completionTimeoutRef = useRef<number | null>(null);
 
   const finishRound = useCallback(
     (outcomes = outcomesRef.current) => {
@@ -107,10 +108,12 @@ export function GameScreen({
         feedbackTimeoutRef.current = null;
       }, FEEDBACK_DURATION_MS);
 
-      if (typeof navigator.vibrate === "function") {
+      if (settings.vibrationEnabled && typeof navigator.vibrate === "function") {
         navigator.vibrate(outcome === "correct" ? 70 : [45, 35, 45]);
       }
-      playOutcomeSound(outcome);
+      if (settings.soundEnabled) {
+        playOutcomeSound(outcome);
+      }
 
       if (outcome === "correct") {
         setScore((current) => current + 1);
@@ -119,18 +122,24 @@ export function GameScreen({
       }
 
       if (cardIndex + 1 >= cards.length) {
-        window.setTimeout(() => finishRound(nextOutcomes), FEEDBACK_DURATION_MS);
+        completionTimeoutRef.current = window.setTimeout(() => {
+          finishRound(nextOutcomes);
+          completionTimeoutRef.current = null;
+        }, FEEDBACK_DURATION_MS);
       } else {
         setCardIndex((current) => current + 1);
       }
     },
-    [cardIndex, cards, finishRound, isPaused],
+    [cardIndex, cards, finishRound, isPaused, settings.soundEnabled, settings.vibrationEnabled],
   );
 
   useEffect(
     () => () => {
       if (feedbackTimeoutRef.current !== null) {
         window.clearTimeout(feedbackTimeoutRef.current);
+      }
+      if (completionTimeoutRef.current !== null) {
+        window.clearTimeout(completionTimeoutRef.current);
       }
     },
     [],

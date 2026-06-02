@@ -27,6 +27,14 @@ describe("DeckSelectScreen", () => {
       configurable: true,
       value: scrollBy,
     });
+    Object.defineProperty(HTMLElement.prototype, "clientWidth", {
+      configurable: true,
+      value: 100,
+    });
+    Object.defineProperty(HTMLElement.prototype, "scrollWidth", {
+      configurable: true,
+      value: 500,
+    });
     render(
       <DeckSelectScreen
         builtInDecks={decks}
@@ -42,9 +50,14 @@ describe("DeckSelectScreen", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Scroll categories right" }));
     expect(scrollBy).toHaveBeenCalledWith({ left: 180, behavior: "smooth" });
+    expect(within(categoryNav).getByRole("button", { name: "Education" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
 
     expect(screen.getByRole("heading", { name: "Education" })).toBeVisible();
     expect(within(builtInRegion).getByRole("button", { name: /Math/ })).toBeVisible();
+    expect(within(builtInRegion).queryByText(/cards/i)).not.toBeInTheDocument();
     expect(within(builtInRegion).queryByRole("button", { name: /Animals/ })).not.toBeInTheDocument();
 
     fireEvent.click(within(categoryNav).getByRole("button", { name: "Animals" }));

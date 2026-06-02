@@ -4,6 +4,7 @@
 dist
 node_modules
 npm-debug.log*
+references
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts

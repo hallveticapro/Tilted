@@ -14,7 +14,14 @@ import { useLandscapeOrientation } from "./hooks/useLandscapeOrientation";
 import { useMotionControls } from "./hooks/useMotionControls";
 import { primeAudio } from "./services/audio";
 import { loadCustomDecks } from "./services/deckStorage";
-import { loadReverseTilt, saveReverseTilt } from "./services/preferences";
+import {
+  loadReverseTilt,
+  loadSoundEffects,
+  loadVibration,
+  saveReverseTilt,
+  saveSoundEffects,
+  saveVibration,
+} from "./services/preferences";
 import type { Deck, RoundResult, RoundSettings } from "./types";
 
 type Screen =
@@ -47,6 +54,8 @@ function App() {
     motionEnabled: true,
     reverseTilt: loadReverseTilt(),
     tiltThreshold: DEFAULT_THRESHOLD,
+    soundEnabled: loadSoundEffects(),
+    vibrationEnabled: loadVibration(),
   }));
 
   const decks = useMemo(() => [...builtInDecks, ...customDecks], [customDecks]);
@@ -60,6 +69,8 @@ function App() {
 
   const updateSettings = (nextSettings: RoundSettings) => {
     saveReverseTilt(nextSettings.reverseTilt);
+    saveSoundEffects(nextSettings.soundEnabled);
+    saveVibration(nextSettings.vibrationEnabled);
     setSettings(nextSettings);
   };
 
@@ -119,7 +130,9 @@ function App() {
   }, [continueToRound, isPortrait, pendingStart, screen]);
 
   const startRound = async () => {
-    primeAudio();
+    if (settings.soundEnabled) {
+      primeAudio();
+    }
     setRoundResult(null);
     motion.resetCalibration();
 
@@ -133,6 +146,12 @@ function App() {
     if (granted) {
       startWhenLandscape("forehead-setup", "setup");
     }
+  };
+
+  const continueWithoutMotion = () => {
+    const nextSettings = { ...settings, motionEnabled: false };
+    updateSettings(nextSettings);
+    startWhenLandscape("countdown", "setup");
   };
 
   const chooseDeck = (deckId: string) => {
@@ -185,6 +204,7 @@ function App() {
         motionError={motion.error}
         onSettingsChange={updateSettings}
         onStartRound={startRound}
+        onContinueWithoutMotion={continueWithoutMotion}
         onChooseDeck={() => setScreen("decks")}
       />
     );
@@ -206,6 +226,8 @@ function App() {
     return (
       <ForeheadSetupScreen
         movementDetected={motion.foreheadMovementDetected}
+        soundEnabled={settings.soundEnabled}
+        vibrationEnabled={settings.vibrationEnabled}
         onReady={beginCountdown}
         onCancel={cancelPreGame}
       />
@@ -215,6 +237,7 @@ function App() {
   if (screen === "countdown") {
     return (
       <CountdownScreen
+        reverseTilt={settings.reverseTilt}
         onComplete={finishCountdown}
         onCancel={cancelPreGame}
       />

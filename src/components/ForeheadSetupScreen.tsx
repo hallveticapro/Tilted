@@ -3,12 +3,16 @@ import { playReadyTrill } from "../services/audio";
 
 interface ForeheadSetupScreenProps {
   movementDetected: boolean;
+  soundEnabled: boolean;
+  vibrationEnabled: boolean;
   onReady: () => void;
   onCancel: () => void;
 }
 
 export function ForeheadSetupScreen({
   movementDetected,
+  soundEnabled,
+  vibrationEnabled,
   onReady,
   onCancel,
 }: ForeheadSetupScreenProps) {
@@ -20,13 +24,15 @@ export function ForeheadSetupScreen({
     }
 
     setShowReady(true);
-    playReadyTrill();
-    if (typeof navigator.vibrate === "function") {
+    if (soundEnabled) {
+      playReadyTrill();
+    }
+    if (vibrationEnabled && typeof navigator.vibrate === "function") {
       navigator.vibrate([55, 45, 55]);
     }
     const timeoutId = window.setTimeout(onReady, 700);
     return () => window.clearTimeout(timeoutId);
-  }, [movementDetected, onReady]);
+  }, [movementDetected, onReady, soundEnabled, vibrationEnabled]);
 
   return (
     <main className="forehead-screen">

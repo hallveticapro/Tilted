@@ -23,6 +23,8 @@ export interface RoundSettings {
   motionEnabled: boolean;
   reverseTilt: boolean;
   tiltThreshold: number;
+  soundEnabled: boolean;
+  vibrationEnabled: boolean;
 }
 
 export type CardOutcome = "correct" | "pass";

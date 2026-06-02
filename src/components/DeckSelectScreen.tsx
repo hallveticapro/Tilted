@@ -16,8 +16,7 @@ function DeckCard({ deck, onSelect }: { deck: Deck; onSelect: (id: string) => vo
     <button className="deck-card" type="button" onClick={() => onSelect(deck.id)}>
       <span className="deck-card__type">{deck.builtIn ? deck.category ?? "Built-in deck" : "Custom deck"}</span>
       <strong>{deck.name}</strong>
-      <span>{deck.description ?? `${deck.cards.length} cards ready to play.`}</span>
-      <small>{deck.cards.length} cards</small>
+      <span>{deck.description ?? "Your custom guessing deck."}</span>
     </button>
   );
 }

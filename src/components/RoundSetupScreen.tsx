@@ -7,6 +7,7 @@ interface RoundSetupScreenProps {
   motionError: string | null;
   onSettingsChange: (settings: RoundSettings) => void;
   onStartRound: () => void;
+  onContinueWithoutMotion: () => void;
   onChooseDeck: () => void;
 }
 
@@ -18,6 +19,7 @@ export function RoundSetupScreen({
   motionError,
   onSettingsChange,
   onStartRound,
+  onContinueWithoutMotion,
   onChooseDeck,
 }: RoundSetupScreenProps) {
   const update = (partial: Partial<RoundSettings>) =>
@@ -80,7 +82,40 @@ export function RoundSetupScreen({
             />
           </label>
         )}
-        {motionError && <p className="notice notice--warning">{motionError}</p>}
+        <label className="toggle-row">
+          <span>
+            <strong>Sound effects</strong>
+            <small>Play distinct cues for correct answers and passes.</small>
+          </span>
+          <input
+            aria-label="Use sound effects"
+            type="checkbox"
+            checked={settings.soundEnabled}
+            onChange={(event) => update({ soundEnabled: event.target.checked })}
+          />
+        </label>
+        <label className="toggle-row">
+          <span>
+            <strong>Vibration</strong>
+            <small>Use short haptic feedback when this device supports it.</small>
+          </span>
+          <input
+            aria-label="Use vibration"
+            type="checkbox"
+            checked={settings.vibrationEnabled}
+            onChange={(event) => update({ vibrationEnabled: event.target.checked })}
+          />
+        </label>
+        {motionError && (
+          <div className="notice notice--warning stack">
+            <p>{motionError}</p>
+            {settings.motionEnabled && (
+              <button className="button button--secondary" type="button" onClick={onContinueWithoutMotion}>
+                Continue with buttons
+              </button>
+            )}
+          </div>
+        )}
         {settings.motionEnabled && (
           <p className="muted motion-start-note">
             Motion access will be requested when you start. During play, tilt down for Correct

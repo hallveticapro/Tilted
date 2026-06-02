@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   CUSTOM_DECKS_KEY,
+  CUSTOM_DECKS_RECOVERY_KEY,
+  MAX_CARDS_PER_DECK,
   cardsFromLines,
   exportDeck,
   importDeck,
@@ -28,6 +30,8 @@ describe("deckStorage", () => {
     localStorage.setItem(CUSTOM_DECKS_KEY, "{not-json");
 
     expect(loadCustomDecks()).toEqual([]);
+    expect(localStorage.getItem(CUSTOM_DECKS_RECOVERY_KEY)).toBe("{not-json");
+    expect(localStorage.getItem(CUSTOM_DECKS_KEY)).toBe("[]");
   });
 
   it("moves saved decks from the previous app namespace", () => {
@@ -64,5 +68,30 @@ describe("deckStorage", () => {
       answer: "Force",
     });
     expect(imported.cards[0].id).not.toBe(sampleDeck.cards[0].id);
+  });
+
+  it("salvages valid stored decks and preserves the malformed payload", () => {
+    localStorage.setItem(
+      CUSTOM_DECKS_KEY,
+      JSON.stringify([sampleDeck, { id: "bad", name: "Broken", cards: [] }]),
+    );
+
+    expect(loadCustomDecks()).toEqual([{ ...sampleDeck, builtIn: false }]);
+    expect(localStorage.getItem(CUSTOM_DECKS_RECOVERY_KEY)).not.toBeNull();
+  });
+
+  it("deduplicates pasted prompts and rejects oversized decks", () => {
+    const cards = cardsFromLines("One\none\nTwo");
+    expect(cards.map(({ prompt }) => prompt)).toEqual(["One", "Two"]);
+
+    expect(() =>
+      validateDeck({
+        name: "Too Many",
+        cards: Array.from({ length: MAX_CARDS_PER_DECK + 1 }, (_, index) => ({
+          id: `card-${index}`,
+          prompt: `Card ${index}`,
+        })),
+      }),
+    ).toThrow(`up to ${MAX_CARDS_PER_DECK} cards`);
   });
 });
