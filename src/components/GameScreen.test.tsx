@@ -1,7 +1,12 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { playOutcomeSound } from "../services/audio";
 import type { Deck, RoundSettings } from "../types";
-import { GameScreen } from "./GameScreen";
+import { GameScreen, shuffleCards } from "./GameScreen";
+
+vi.mock("../services/audio", () => ({
+  playOutcomeSound: vi.fn(),
+}));
 
 const deck: Deck = {
   id: "test-deck",
@@ -18,6 +23,33 @@ const settings: RoundSettings = {
 };
 
 describe("GameScreen", () => {
+  beforeEach(() => {
+    vi.mocked(playOutcomeSound).mockClear();
+  });
+
+  it("creates a fresh randomized card order for every round", () => {
+    const cards = [
+      { id: "one", prompt: "One" },
+      { id: "two", prompt: "Two" },
+      { id: "three", prompt: "Three" },
+      { id: "four", prompt: "Four" },
+    ];
+    const random = vi
+      .spyOn(Math, "random")
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(0.99)
+      .mockReturnValueOnce(0.99)
+      .mockReturnValueOnce(0.99);
+
+    expect(shuffleCards(cards).map(({ id }) => id)).toEqual(["two", "three", "four", "one"]);
+    expect(shuffleCards(cards).map(({ id }) => id)).toEqual(["one", "two", "three", "four"]);
+    expect(cards.map(({ id }) => id)).toEqual(["one", "two", "three", "four"]);
+
+    random.mockRestore();
+  });
+
   it("records a correct card and completes a one-card round", () => {
     vi.useFakeTimers();
     const onRoundEnd = vi.fn();
@@ -35,6 +67,7 @@ describe("GameScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: /correct/i }));
     expect(screen.getByRole("status")).toHaveTextContent("Correct!");
     expect(screen.getByRole("status")).toHaveClass("feedback-flash--correct");
+    expect(playOutcomeSound).toHaveBeenCalledWith("correct");
     act(() => vi.advanceTimersByTime(500));
 
     expect(onRoundEnd).toHaveBeenCalledTimes(1);
@@ -62,6 +95,7 @@ describe("GameScreen", () => {
     fireEvent.keyDown(window, { key: "ArrowLeft" });
     expect(screen.getByRole("status")).toHaveTextContent("Pass");
     expect(screen.getByRole("status")).toHaveClass("feedback-flash--pass");
+    expect(playOutcomeSound).toHaveBeenCalledWith("pass");
     act(() => vi.advanceTimersByTime(500));
 
     expect(onRoundEnd.mock.calls[0][0].passedCards).toEqual([deck.cards[0]]);

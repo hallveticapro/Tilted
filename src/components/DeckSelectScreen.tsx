@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Deck } from "../types";
+import { CategoryScroller } from "./CategoryScroller";
 import { ScreenLayout } from "./ScreenLayout";
 
 interface DeckSelectScreenProps {
@@ -53,18 +54,12 @@ export function DeckSelectScreen({
         </button>
       }
     >
-      <nav className="deck-categories" aria-label="Deck categories">
-        {[ALL_CATEGORIES, ...categories].map((category) => (
-          <button
-            className={selectedCategory === category ? "is-selected" : ""}
-            key={category}
-            type="button"
-            onClick={() => setSelectedCategory(category)}
-          >
-            {category}
-          </button>
-        ))}
-      </nav>
+      <CategoryScroller
+        ariaLabel="Deck categories"
+        categories={[ALL_CATEGORIES, ...categories]}
+        selectedCategory={selectedCategory}
+        onSelect={setSelectedCategory}
+      />
       <div className="section-heading">
         <h2>{selectedCategory === ALL_CATEGORIES ? "All built-in decks" : selectedCategory}</h2>
         <span className="muted">{visibleBuiltInDecks.length} decks</span>

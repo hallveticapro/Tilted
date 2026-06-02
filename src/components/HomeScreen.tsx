@@ -10,9 +10,12 @@ export function HomeScreen({ onPlay, onEditDecks, onHowToPlay }: HomeScreenProps
   return (
     <ScreenLayout title="Tilted" eyebrow="Team clues, quick guesses">
       <section className="hero-panel">
-        <div className="hero-panel__burst" aria-hidden="true">
-          TF
-        </div>
+        <img
+          className="hero-panel__logo"
+          src="./assets/tilted-hero-mark.png"
+          alt=""
+          aria-hidden="true"
+        />
         <div>
           <p className="hero-panel__intro">
             Hold up a phone while teammates describe the word. Guess fast, then tilt for the

@@ -1,4 +1,5 @@
 import type { Card, Deck, Difficulty } from "../types";
+import { getDeckPromptExpansions } from "./deckPromptExpansions";
 import { expandedDeckSeeds } from "./expandedDeckSeeds";
 
 type SeedCard = Omit<Card, "id">;
@@ -24,16 +25,40 @@ function makePromptDeck({
   category,
   prompts,
 }: (typeof expandedDeckSeeds)[number]): Deck {
+  const descriptionName = name === "U.S. States" ? "U.S. states" : name.toLowerCase();
   return {
     id,
     name,
     category,
-    description: `Give clues for these ${name.toLowerCase()} without saying the answer.`,
+    description: `Give clues for these ${descriptionName} without saying the answer.`,
     builtIn: true,
     cards: makeCards(
       id,
       prompts.map((prompt) => word(prompt, name, "easy")),
     ),
+  };
+}
+
+function expandDeck(deck: Deck): Deck {
+  const usedPrompts = new Set(deck.cards.map(({ prompt }) => prompt.toLowerCase()));
+  const expansionPrompts = getDeckPromptExpansions(deck.id).filter((prompt) => {
+    const key = prompt.toLowerCase();
+    if (usedPrompts.has(key)) {
+      return false;
+    }
+    usedPrompts.add(key);
+    return true;
+  });
+  const expansionCards = expansionPrompts.map((prompt, index) => ({
+      id: `${deck.id}-extra-${index + 1}`,
+      prompt,
+      category: deck.name,
+      difficulty: "easy" as const,
+    }));
+
+  return {
+    ...deck,
+    cards: [...deck.cards, ...expansionCards].slice(0, 50),
   };
 }
 
@@ -173,4 +198,4 @@ export const builtInDecks: Deck[] = [
     ]),
   },
   ...expandedDeckSeeds.map(makePromptDeck),
-];
+].map(expandDeck);

@@ -53,8 +53,9 @@ describe("builtInDecks", () => {
     expect(requiredDeckNames.every((name) => builtInDecks.some((deck) => deck.name === name))).toBe(
       true,
     );
-    expect(builtInDecks.every(({ category, cards }) => Boolean(category) && cards.length >= 12)).toBe(
+    expect(builtInDecks.every(({ category, cards }) => Boolean(category) && cards.length >= 50)).toBe(
       true,
     );
+    expect(builtInDecks.find(({ id }) => id === "us-states")?.description).toContain("U.S. states");
   });
 });

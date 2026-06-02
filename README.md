@@ -1,5 +1,7 @@
 # Tilted
 
+![Tilted cover](./public/assets/tilted-cover.png)
+
 Tilted is a mobile-first, classroom-friendly team guessing game for browsers. One player
 holds up a phone in landscape mode while teammates describe the visible word without saying
 the word or any part of it. The phone holder guesses, then tilts the phone to mark the card
@@ -7,7 +9,8 @@ Correct or Pass. Always-available touch controls work as a fallback.
 
 The built-in library includes more than 70 decks organized into browseable categories such
 as Education, Animals, Disney, Theme Parks, Movies & TV, Music, Heroes & Sci-Fi, Sports &
-Games, Places & Travel, Food & Everyday, and Just for Fun.
+Games, Places & Travel, Food & Everyday, and Just for Fun. Every built-in deck includes at
+least 50 shuffled cards.
 
 ## Run locally
 
@@ -30,7 +33,8 @@ Tilted uses browser `DeviceOrientationEvent` data when available. Motion control
 optional: the large Correct and Pass buttons and keyboard shortcuts work without sensor data.
 During an active motion round, the buttons stay hidden so the card fills the screen. Tap the
 top-right menu button to reveal the fallback controls or pause the round. A paused round can
-be resumed or quit.
+be resumed or quit. Correct and Pass actions use distinct screen flashes, short sound cues,
+and vibration patterns when the browser and device support them.
 
 Motion access normally requires HTTPS outside of local development. iOS Safari also requires
 the permission request to happen directly after a user taps a button. That is why Tilted

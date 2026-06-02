@@ -22,6 +22,11 @@ const decks: Deck[] = [
 
 describe("DeckSelectScreen", () => {
   it("opens on the first category and filters built-in decks", () => {
+    const scrollBy = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollBy", {
+      configurable: true,
+      value: scrollBy,
+    });
     render(
       <DeckSelectScreen
         builtInDecks={decks}
@@ -34,6 +39,9 @@ describe("DeckSelectScreen", () => {
 
     const categoryNav = screen.getByRole("navigation", { name: "Deck categories" });
     const builtInRegion = screen.getByRole("region", { name: "Built-in decks" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Scroll categories right" }));
+    expect(scrollBy).toHaveBeenCalledWith({ left: 180, behavior: "smooth" });
 
     expect(screen.getByRole("heading", { name: "Education" })).toBeVisible();
     expect(within(builtInRegion).getByRole("button", { name: /Math/ })).toBeVisible();

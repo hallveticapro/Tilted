@@ -57,7 +57,7 @@ export function RoundSetupScreen({
         <label className="toggle-row">
           <span>
             <strong>Motion controls</strong>
-            <small>Tilt to move through cards. Buttons stay visible.</small>
+            <small>Tilt to move through cards. Fallback buttons stay in the menu.</small>
           </span>
           <input
             aria-label="Use motion controls"

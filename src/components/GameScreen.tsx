@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTimer } from "../hooks/useTimer";
+import { playOutcomeSound } from "../services/audio";
 import type {
   Card,
   CardOutcome,
@@ -22,7 +23,7 @@ interface GameScreenProps {
 
 const FEEDBACK_DURATION_MS = 500;
 
-function shuffled<T>(items: T[]): T[] {
+export function shuffleCards<T>(items: T[]): T[] {
   const result = [...items];
   for (let index = result.length - 1; index > 0; index -= 1) {
     const swapIndex = Math.floor(Math.random() * (index + 1));
@@ -53,7 +54,7 @@ export function GameScreen({
   onRoundEnd,
   onQuit,
 }: GameScreenProps) {
-  const cards = useMemo(() => shuffled(deck.cards), [deck.cards]);
+  const cards = useMemo(() => shuffleCards(deck.cards), [deck.cards]);
   const [cardIndex, setCardIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [passCount, setPassCount] = useState(0);
@@ -109,6 +110,7 @@ export function GameScreen({
       if (typeof navigator.vibrate === "function") {
         navigator.vibrate(outcome === "correct" ? 70 : [45, 35, 45]);
       }
+      playOutcomeSound(outcome);
 
       if (outcome === "correct") {
         setScore((current) => current + 1);
@@ -197,10 +199,6 @@ export function GameScreen({
           <div>
             <span>Pass</span>
             <strong>{passCount}</strong>
-          </div>
-          <div className={`motion-pill motion-pill--${motionStatus}`}>
-            <span>Motion</span>
-            <strong>{hasActiveMotion ? "On" : "Buttons"}</strong>
           </div>
         </div>
         {showMenuButton && (

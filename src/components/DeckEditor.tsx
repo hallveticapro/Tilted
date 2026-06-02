@@ -10,6 +10,7 @@ import {
 } from "../services/deckStorage";
 import type { Card, Deck, Difficulty } from "../types";
 import { createId } from "../utils/id";
+import { CategoryScroller } from "./CategoryScroller";
 import { ScreenLayout } from "./ScreenLayout";
 
 interface DeckEditorProps {
@@ -17,6 +18,8 @@ interface DeckEditorProps {
   onDecksChange: (decks: Deck[]) => void;
   onBack: () => void;
 }
+
+const ALL_CATEGORIES = "All";
 
 function downloadJson(deck: Deck): void {
   const blob = new Blob([exportDeck(deck)], { type: "application/json" });
@@ -33,6 +36,24 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
   const [lineImport, setLineImport] = useState("");
   const [jsonImport, setJsonImport] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const starterCategories = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          builtInDecks
+            .map((deck) => deck.category)
+            .filter((category): category is string => Boolean(category)),
+        ),
+      ),
+    [],
+  );
+  const [starterCategory, setStarterCategory] = useState(
+    () => starterCategories[0] ?? ALL_CATEGORIES,
+  );
+  const visibleStarterDecks =
+    starterCategory === ALL_CATEGORIES
+      ? builtInDecks
+      : builtInDecks.filter((deck) => deck.category === starterCategory);
   const selectedDeck = useMemo(
     () => customDecks.find((deck) => deck.id === selectedDeckId),
     [customDecks, selectedDeckId],
@@ -155,12 +176,24 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
             </button>
           ))}
           <h3>Copy a starter</h3>
-          {builtInDecks.map((deck) => (
-            <button className="editor-deck-link" key={deck.id} type="button" onClick={() => addCopy(deck)}>
-              {deck.name}
-              <small>Make editable copy</small>
-            </button>
-          ))}
+          <CategoryScroller
+            ariaLabel="Starter deck categories"
+            categories={[ALL_CATEGORIES, ...starterCategories]}
+            selectedCategory={starterCategory}
+            onSelect={setStarterCategory}
+            compact
+          />
+          <section className="starter-decks" aria-label="Starter decks">
+            <p className="muted starter-decks__count">
+              {visibleStarterDecks.length} {visibleStarterDecks.length === 1 ? "deck" : "decks"}
+            </p>
+            {visibleStarterDecks.map((deck) => (
+              <button className="editor-deck-link" key={deck.id} type="button" onClick={() => addCopy(deck)}>
+                {deck.name}
+                <small>Make editable copy</small>
+              </button>
+            ))}
+          </section>
         </aside>
 
         <section className="editor-main">
