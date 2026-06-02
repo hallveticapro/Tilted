@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "verify:static": "node scripts/verify-static.mjs",
+    "verify:container": "./scripts/verify-container.sh"
   },
   "dependencies": {
     "react": "^19.2.7",

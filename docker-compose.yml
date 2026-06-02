@@ -6,10 +6,13 @@ services:
     container_name: tilted
     ports:
       - "8080:8080"
+    environment:
+      TILTED_PUBLIC_URL: ${TILTED_PUBLIC_URL:-}
+      TILTED_SHARE_IMAGE_URL: ${TILTED_SHARE_IMAGE_URL:-}
     restart: unless-stopped
     read_only: true
     tmpfs:
-      - /tmp:size=16m,mode=1777
+      - /tmp:size=32m,mode=1777
     cap_drop:
       - ALL
     security_opt:

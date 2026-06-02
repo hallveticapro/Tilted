@@ -1,6 +1,9 @@
 {
   "name": "Tilted",
   "short_name": "Tilted",
+  "description": "A quick, mobile-friendly team guessing game for classrooms, parties, and custom decks.",
+  "start_url": "./",
+  "scope": "./",
   "icons": [
     {
       "src": "./web-app-manifest-192x192.png",

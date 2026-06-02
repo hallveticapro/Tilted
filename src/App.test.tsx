@@ -35,8 +35,8 @@ describe("App landscape gate", () => {
     setViewport(390, 844);
     render(<App />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Play" }));
-    fireEvent.click(screen.getByRole("button", { name: /4th Grade Math Review/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Quick Round" }));
+    fireEvent.click(screen.getByRole("button", { name: "4th Grade Math Review" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "Use motion controls" }));
     fireEvent.click(screen.getByRole("button", { name: "Start Round" }));
 
@@ -69,8 +69,8 @@ describe("App landscape gate", () => {
     setViewport(844, 390);
     render(<App />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Play" }));
-    fireEvent.click(screen.getByRole("button", { name: /4th Grade Math Review/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Quick Round" }));
+    fireEvent.click(screen.getByRole("button", { name: "4th Grade Math Review" }));
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Start Round" }));
       await Promise.resolve();
@@ -81,5 +81,17 @@ describe("App landscape gate", () => {
 
     fireEvent.click(fallbackButton);
     expect(screen.getByText("Ready?")).toBeVisible();
+  });
+
+  it("shows the first Team Game phone-holder handoff after deck selection", () => {
+    setViewport(844, 390);
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Team Game" }));
+    fireEvent.click(screen.getByRole("button", { name: "Choose a Deck" }));
+    fireEvent.click(screen.getByRole("button", { name: "4th Grade Math Review" }));
+
+    expect(screen.getByRole("heading", { name: "Team 1's turn" })).toBeVisible();
+    expect(screen.getByText(/Hand the phone to/)).toHaveTextContent("Team 1");
   });
 });

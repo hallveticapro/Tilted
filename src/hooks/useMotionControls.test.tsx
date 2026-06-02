@@ -150,6 +150,26 @@ describe("useMotionControls", () => {
     expect(result.current.lastAction).toMatchObject({ outcome: "pass" });
   });
 
+  it("reports a missing sample instead of pretending calibration succeeded", async () => {
+    const { result } = renderHook(() =>
+      useMotionControls({ enabled: true, reverseTilt: false }),
+    );
+
+    await act(async () => {
+      await result.current.requestPermission();
+    });
+    act(() => result.current.startCalibration());
+
+    let calibrated = true;
+    act(() => {
+      calibrated = result.current.finishCalibration();
+    });
+
+    expect(calibrated).toBe(false);
+    expect(result.current.status).toBe("waiting-for-sample");
+    expect(result.current.error).toContain("No tilt sample arrived");
+  });
+
   it("requests every available iOS permission and falls back after denial", async () => {
     const orientationPermission = vi.fn().mockResolvedValue("granted");
     const motionPermission = vi.fn().mockResolvedValue("denied");

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface AboutModalProps {
   onClose: () => void;
@@ -32,15 +32,42 @@ const socialLinks = [
 ];
 
 export function AboutModal({ onClose }: AboutModalProps) {
+  const dialogRef = useRef<HTMLElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         onClose();
+      } else if (event.key === "Tab") {
+        const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        );
+        if (!focusable || focusable.length === 0) {
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }
     };
 
     window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
+    return () => {
+      window.removeEventListener("keydown", closeOnEscape);
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus();
+    };
   }, [onClose]);
 
   return (
@@ -54,13 +81,14 @@ export function AboutModal({ onClose }: AboutModalProps) {
       }}
     >
       <section
+        ref={dialogRef}
         className="about-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="about-tilted-title"
         aria-describedby="about-tilted-description"
       >
-        <button className="modal-close" type="button" aria-label="Close About Tilted" onClick={onClose}>
+        <button ref={closeRef} className="modal-close" type="button" aria-label="Close About Tilted" onClick={onClose}>
           ×
         </button>
         <img className="about-modal__logo" src="./assets/tilted-logo.png" alt="Tilted" />
@@ -86,7 +114,7 @@ export function AboutModal({ onClose }: AboutModalProps) {
               className="button button--primary"
               href="https://buymeacoffee.com/hallveticapro"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
             >
               Buy Me A Coffee
             </a>
@@ -101,7 +129,7 @@ export function AboutModal({ onClose }: AboutModalProps) {
                   href={socialLink.href}
                   key={socialLink.name}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                 >
                   <img src={socialLink.icon} alt="" aria-hidden="true" />
                   <span>

@@ -26,4 +26,20 @@ describe("useTimer", () => {
     expect(onExpire).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
   });
+
+  it("catches up to an absolute deadline after delayed callbacks", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-02T12:00:00Z"));
+    const onExpire = vi.fn();
+    const { result } = renderHook(() => useTimer({ durationSeconds: 3, onExpire }));
+
+    act(() => {
+      vi.setSystemTime(new Date("2026-06-02T12:00:04Z"));
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(result.current.remainingSeconds).toBe(0);
+    expect(onExpire).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
 });

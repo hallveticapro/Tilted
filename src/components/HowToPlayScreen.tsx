@@ -33,6 +33,16 @@ export function HowToPlayScreen({ onBack }: HowToPlayScreenProps) {
           On a keyboard, use <kbd>→</kbd> for Correct, <kbd>←</kbd> for Pass, and{" "}
           <kbd>Space</kbd> to pause or resume.
         </p>
+        <p>
+          Use <strong>Team Game</strong> to rotate teams and optional player rosters
+          automatically. Use <strong>Teacher review</strong> in round setup for a
+          button-controlled classroom round without forehead calibration.
+        </p>
+        <p>
+          On iPhone or iPad, install Tilted by tapping Share and then{" "}
+          <strong>Add to Home Screen</strong>. Installed apps may have more reliable access
+          to fullscreen and landscape locking where the browser supports them.
+        </p>
       </section>
     </ScreenLayout>
   );

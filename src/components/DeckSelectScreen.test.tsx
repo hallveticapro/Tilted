@@ -42,6 +42,12 @@ describe("DeckSelectScreen", () => {
         onSelect={vi.fn()}
         onBack={vi.fn()}
         onEditDecks={vi.fn()}
+        favoriteDeckIds={[]}
+        recentDeckIds={[]}
+        classroomOnly={false}
+        onClassroomOnlyChange={vi.fn()}
+        onToggleFavorite={vi.fn()}
+        onSelectMixed={vi.fn()}
       />,
     );
 
@@ -56,13 +62,13 @@ describe("DeckSelectScreen", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Education" })).toBeVisible();
-    expect(within(builtInRegion).getByRole("button", { name: /Math/ })).toBeVisible();
+    expect(within(builtInRegion).getByRole("button", { name: "Math" })).toBeVisible();
     expect(within(builtInRegion).queryByText(/cards/i)).not.toBeInTheDocument();
     expect(within(builtInRegion).queryByRole("button", { name: /Animals/ })).not.toBeInTheDocument();
 
     fireEvent.click(within(categoryNav).getByRole("button", { name: "Animals" }));
     expect(screen.getByRole("heading", { name: "Animals" })).toBeVisible();
-    expect(within(builtInRegion).getByRole("button", { name: /Animals/ })).toBeVisible();
+    expect(within(builtInRegion).getByRole("button", { name: "Animals" })).toBeVisible();
     expect(within(builtInRegion).queryByRole("button", { name: /Math/ })).not.toBeInTheDocument();
   });
 });

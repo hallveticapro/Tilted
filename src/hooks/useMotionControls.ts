@@ -19,6 +19,7 @@ interface UseMotionControlsOptions {
   gestureSampleCount?: number;
   smoothingFactor?: number;
   foreheadMovementThreshold?: number;
+  publishSamples?: boolean;
 }
 
 function getOrientationConstructor(): PermissionAwareEventConstructor | undefined {
@@ -82,6 +83,7 @@ export function useMotionControls({
   gestureSampleCount = 4,
   smoothingFactor = 0.2,
   foreheadMovementThreshold = 35,
+  publishSamples = false,
 }: UseMotionControlsOptions) {
   const supportsOrientation =
     typeof window !== "undefined" && "DeviceOrientationEvent" in window;
@@ -116,6 +118,7 @@ export function useMotionControls({
   const actionIdRef = useRef(0);
   const lastTriggeredAtRef = useRef(Number.NEGATIVE_INFINITY);
   const armedRef = useRef(true);
+  const lastPublishedSampleAtRef = useRef(Number.NEGATIVE_INFINITY);
 
   useEffect(() => {
     reverseTiltRef.current = reverseTilt;
@@ -277,7 +280,11 @@ export function useMotionControls({
       };
       filteredAxisRef.current = sample.axisValue;
       currentSampleRef.current = sample;
-      setCurrentSample(sample);
+      const now = Date.now();
+      if (publishSamples && now - lastPublishedSampleAtRef.current >= 120) {
+        lastPublishedSampleAtRef.current = now;
+        setCurrentSample(sample);
+      }
 
       if (foreheadDetectionActiveRef.current) {
         const anchor = foreheadAnchorRef.current;
@@ -320,7 +327,6 @@ export function useMotionControls({
         return;
       }
 
-      const now = Date.now();
       if (
         !armedRef.current ||
         now - lastTriggeredAtRef.current < cooldownMs ||
@@ -371,6 +377,7 @@ export function useMotionControls({
     gestureHoldMs,
     gestureSampleCount,
     permission,
+    publishSamples,
     smoothingFactor,
     threshold,
   ]);

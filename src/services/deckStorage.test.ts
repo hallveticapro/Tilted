@@ -3,9 +3,13 @@ import {
   CUSTOM_DECKS_KEY,
   CUSTOM_DECKS_RECOVERY_KEY,
   MAX_CARDS_PER_DECK,
+  cardsFromCsv,
   cardsFromLines,
   exportDeck,
+  exportDeckCsv,
+  exportDeckLibrary,
   importDeck,
+  importDeckLibrary,
   loadCustomDecks,
   saveCustomDecks,
   validateDeck,
@@ -93,5 +97,21 @@ describe("deckStorage", () => {
         })),
       }),
     ).toThrow(`up to ${MAX_CARDS_PER_DECK} cards`);
+  });
+
+  it("imports and exports spreadsheet-friendly CSV cards", () => {
+    const csv = exportDeckCsv(sampleDeck);
+    expect(csv).toContain("prompt,hint,category,difficulty");
+    expect(cardsFromCsv(csv)).toMatchObject([
+      { prompt: "A push or a pull", answer: "Force" },
+    ]);
+  });
+
+  it("exports and restores a whole custom-deck library with fresh IDs", () => {
+    const restored = importDeckLibrary(exportDeckLibrary([sampleDeck]));
+    expect(restored).toHaveLength(1);
+    expect(restored[0]).toMatchObject({ name: "Review Copy", builtIn: false });
+    expect(restored[0].id).not.toBe(sampleDeck.id);
+    expect(restored[0].cards[0].id).not.toBe(sampleDeck.cards[0].id);
   });
 });

@@ -4,11 +4,13 @@ import { ScreenLayout } from "./ScreenLayout";
 
 interface HomeScreenProps {
   onPlay: () => void;
+  onTeamGame: () => void;
+  onHistory: () => void;
   onEditDecks: () => void;
   onHowToPlay: () => void;
 }
 
-export function HomeScreen({ onPlay, onEditDecks, onHowToPlay }: HomeScreenProps) {
+export function HomeScreen({ onPlay, onTeamGame, onHistory, onEditDecks, onHowToPlay }: HomeScreenProps) {
   const [showAbout, setShowAbout] = useState(false);
 
   return (
@@ -39,13 +41,19 @@ export function HomeScreen({ onPlay, onEditDecks, onHowToPlay }: HomeScreenProps
         </section>
         <section className="stack stack--large" aria-label="Main menu">
           <button className="button button--primary button--large" type="button" onClick={onPlay}>
-            Play
+            Quick Round
+          </button>
+          <button className="button button--secondary button--large" type="button" onClick={onTeamGame}>
+            Team Game
           </button>
           <button className="button button--secondary" type="button" onClick={onEditDecks}>
             Create/Edit Decks
           </button>
           <button className="button button--ghost" type="button" onClick={onHowToPlay}>
             How to Play
+          </button>
+          <button className="button button--ghost" type="button" onClick={onHistory}>
+            Round History
           </button>
         </section>
       </ScreenLayout>

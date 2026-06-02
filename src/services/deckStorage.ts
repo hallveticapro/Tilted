@@ -1,5 +1,11 @@
 import type { Card, Deck, Difficulty } from "../types";
 import { createId } from "../utils/id";
+import {
+  getBrowserStorage,
+  readStoredValue,
+  removeStoredValue,
+  writeStoredValue,
+} from "./safeStorage";
 
 export const CUSTOM_DECKS_KEY = "tilted.customDecks.v1";
 export const CUSTOM_DECKS_RECOVERY_KEY = "tilted.customDecks.recovery.v1";
@@ -108,24 +114,21 @@ function validateDecks(decks: Deck[]): Deck[] {
   return validatedDecks;
 }
 
-function setStoredValue(storage: Storage, key: string, value: string): void {
-  try {
-    storage.setItem(key, value);
-  } catch {
+function setStoredValue(storage: Storage | null, key: string, value: string): void {
+  if (!writeStoredValue(storage, key, value)) {
     throw new Error("Browser storage is full. Export a backup or remove an older custom deck.");
   }
 }
 
-function preserveRecovery(storage: Storage, stored: string): void {
-  try {
-    storage.setItem(CUSTOM_DECKS_RECOVERY_KEY, stored);
-  } catch {
-    // Recovery is best-effort when browser storage is already exhausted.
-  }
+function preserveRecovery(storage: Storage | null, stored: string): void {
+  writeStoredValue(storage, CUSTOM_DECKS_RECOVERY_KEY, stored);
 }
 
-export function loadCustomDecks(storage: Storage = localStorage): Deck[] {
-  const stored = storage.getItem(CUSTOM_DECKS_KEY) ?? storage.getItem(LEGACY_CUSTOM_DECKS_KEY);
+export function loadCustomDecks(storage?: Storage): Deck[] {
+  const browserStorage = getBrowserStorage(storage);
+  const stored =
+    readStoredValue(browserStorage, CUSTOM_DECKS_KEY) ??
+    readStoredValue(browserStorage, LEGACY_CUSTOM_DECKS_KEY);
   if (!stored) {
     return [];
   }
@@ -153,35 +156,31 @@ export function loadCustomDecks(storage: Storage = localStorage): Deck[] {
       }
     });
     if (skippedDeck) {
-      preserveRecovery(storage, stored);
+      preserveRecovery(browserStorage, stored);
     }
-    setStoredValue(storage, CUSTOM_DECKS_KEY, JSON.stringify(decks));
-    storage.removeItem(LEGACY_CUSTOM_DECKS_KEY);
+    setStoredValue(browserStorage, CUSTOM_DECKS_KEY, JSON.stringify(decks));
+    removeStoredValue(browserStorage, LEGACY_CUSTOM_DECKS_KEY);
     return decks;
   } catch {
-    preserveRecovery(storage, stored);
-    try {
-      storage.setItem(CUSTOM_DECKS_KEY, "[]");
-      storage.removeItem(LEGACY_CUSTOM_DECKS_KEY);
-    } catch {
-      // Keep the best-effort backup when storage cannot be rewritten.
-    }
+    preserveRecovery(browserStorage, stored);
+    writeStoredValue(browserStorage, CUSTOM_DECKS_KEY, "[]");
+    removeStoredValue(browserStorage, LEGACY_CUSTOM_DECKS_KEY);
     return [];
   }
 }
 
-export function saveCustomDecks(decks: Deck[], storage: Storage = localStorage): Deck[] {
+export function saveCustomDecks(decks: Deck[], storage?: Storage): Deck[] {
   const validatedDecks = validateDecks(decks);
-  setStoredValue(storage, CUSTOM_DECKS_KEY, JSON.stringify(validatedDecks));
+  setStoredValue(getBrowserStorage(storage), CUSTOM_DECKS_KEY, JSON.stringify(validatedDecks));
   return validatedDecks;
 }
 
-export function getCustomDeckRecovery(storage: Storage = localStorage): string | null {
-  return storage.getItem(CUSTOM_DECKS_RECOVERY_KEY);
+export function getCustomDeckRecovery(storage?: Storage): string | null {
+  return readStoredValue(getBrowserStorage(storage), CUSTOM_DECKS_RECOVERY_KEY);
 }
 
-export function clearCustomDeckRecovery(storage: Storage = localStorage): void {
-  storage.removeItem(CUSTOM_DECKS_RECOVERY_KEY);
+export function clearCustomDeckRecovery(storage?: Storage): void {
+  removeStoredValue(getBrowserStorage(storage), CUSTOM_DECKS_RECOVERY_KEY);
 }
 
 export function createDeck(name = "New Deck"): Deck {
@@ -256,4 +255,98 @@ export function importDeck(json: string): Deck {
     name: `${deck.name} Imported`,
     cards: deck.cards.map((card) => ({ ...card, id: createId("card") })),
   };
+}
+
+export function exportDeckLibrary(decks: Deck[]): string {
+  return JSON.stringify(validateDecks(decks), null, 2);
+}
+
+export function importDeckLibrary(json: string): Deck[] {
+  if (json.length > MAX_IMPORT_BYTES) {
+    throw new Error("That JSON library is too large to import.");
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    throw new Error("That JSON library could not be parsed.");
+  }
+  if (!Array.isArray(parsed)) {
+    throw new Error("A deck-library backup needs to be an array.");
+  }
+  return validateDecks(parsed.map((deck) => copyDeck(validateDeck(deck))));
+}
+
+function parseCsvRows(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = "";
+  let quoted = false;
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+    if (character === '"') {
+      if (quoted && text[index + 1] === '"') {
+        cell += '"';
+        index += 1;
+      } else {
+        quoted = !quoted;
+      }
+    } else if (character === "," && !quoted) {
+      row.push(cell);
+      cell = "";
+    } else if ((character === "\n" || character === "\r") && !quoted) {
+      if (character === "\r" && text[index + 1] === "\n") {
+        index += 1;
+      }
+      row.push(cell);
+      if (row.some((value) => value.trim())) {
+        rows.push(row);
+      }
+      row = [];
+      cell = "";
+    } else {
+      cell += character;
+    }
+  }
+  if (quoted) {
+    throw new Error("That CSV has an unfinished quoted value.");
+  }
+  row.push(cell);
+  if (row.some((value) => value.trim())) {
+    rows.push(row);
+  }
+  return rows;
+}
+
+function escapeCsv(value = ""): string {
+  return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+}
+
+export function exportDeckCsv(deck: Deck): string {
+  return [
+    ["prompt", "hint", "category", "difficulty"],
+    ...deck.cards.map((card) => [
+      card.prompt,
+      card.answer ?? "",
+      card.category ?? "",
+      card.difficulty ?? "",
+    ]),
+  ]
+    .map((row) => row.map(escapeCsv).join(","))
+    .join("\n");
+}
+
+export function cardsFromCsv(text: string): Card[] {
+  if (text.length > MAX_IMPORT_BYTES) {
+    throw new Error("That CSV is too large to import.");
+  }
+  const rows = parseCsvRows(text);
+  const hasHeader = rows[0]?.[0].trim().toLocaleLowerCase() === "prompt";
+  const cards = (hasHeader ? rows.slice(1) : rows).map(([prompt, answer, category, difficulty]) =>
+    validateCard({ prompt, answer, category, difficulty: difficulty || undefined }),
+  );
+  if (cards.length > MAX_CARDS_PER_DECK) {
+    throw new Error(`Import up to ${MAX_CARDS_PER_DECK} cards at a time.`);
+  }
+  return cards;
 }

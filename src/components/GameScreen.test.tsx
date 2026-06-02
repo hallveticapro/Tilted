@@ -20,8 +20,15 @@ const settings: RoundSettings = {
   motionEnabled: false,
   reverseTilt: false,
   tiltThreshold: 25,
+  sensitivityPreset: "standard",
   soundEnabled: true,
   vibrationEnabled: true,
+  gameplayStyle: "forehead",
+  difficultyFilter: "all",
+  subcategoryFilter: "",
+  cycleDeck: false,
+  passLimit: null,
+  fullscreenEnabled: false,
 };
 
 describe("GameScreen", () => {
@@ -101,6 +108,40 @@ describe("GameScreen", () => {
     act(() => vi.advanceTimersByTime(500));
 
     expect(onRoundEnd.mock.calls[0][0].passedCards).toEqual([deck.cards[0]]);
+    vi.useRealTimers();
+  });
+
+  it("locks rapid input while feedback is visible", () => {
+    vi.useFakeTimers();
+    const onRoundEnd = vi.fn();
+    render(
+      <GameScreen
+        deck={{
+          id: "two-card-deck",
+          name: "Two Cards",
+          cards: [
+            { id: "first", prompt: "First" },
+            { id: "second", prompt: "Second" },
+          ],
+        }}
+        settings={settings}
+        motionStatus="off"
+        motionAction={null}
+        onRoundEnd={onRoundEnd}
+        onQuit={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /correct/i }));
+    fireEvent.click(screen.getByRole("button", { name: /correct/i }));
+    fireEvent.keyDown(window, { key: "ArrowRight" });
+    expect(screen.getByText("Score").nextElementSibling).toHaveTextContent("1");
+    expect(onRoundEnd).not.toHaveBeenCalled();
+
+    act(() => vi.advanceTimersByTime(500));
+    fireEvent.click(screen.getByRole("button", { name: /correct/i }));
+    act(() => vi.advanceTimersByTime(500));
+    expect(onRoundEnd.mock.calls[0][0].correctCards).toHaveLength(2);
     vi.useRealTimers();
   });
 

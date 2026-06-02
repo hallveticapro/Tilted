@@ -4,7 +4,7 @@ import { HomeScreen } from "./HomeScreen";
 
 describe("HomeScreen", () => {
   it("opens and closes the About Tilted modal", () => {
-    render(<HomeScreen onPlay={vi.fn()} onEditDecks={vi.fn()} onHowToPlay={vi.fn()} />);
+    render(<HomeScreen onPlay={vi.fn()} onTeamGame={vi.fn()} onHistory={vi.fn()} onEditDecks={vi.fn()} onHowToPlay={vi.fn()} />);
 
     fireEvent.click(screen.getByRole("button", { name: "About Tilted" }));
 

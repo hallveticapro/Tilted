@@ -7,9 +7,10 @@ holds a phone against their forehead in landscape mode while teammates describe 
 word without saying the word or any part of it. The phone holder guesses, then tilts the
 phone down for Correct or up to Pass.
 
-Tilted includes classroom review decks, party-friendly categories, custom deck editing,
-motion controls, touch and keyboard fallbacks, offline shell caching, and a small static
-Docker image for self-hosting.
+Tilted includes classroom review decks, party-friendly categories, quick rounds, local team
+games, persistent round history, custom deck editing and sharing, motion diagnostics, touch
+and keyboard fallbacks, installable offline support, and a small static Docker image for
+self-hosting.
 
 ## Table of Contents
 
@@ -19,6 +20,8 @@ Docker image for self-hosting.
 - [Install and Run Locally](#install-and-run-locally)
 - [Controls](#controls)
 - [Motion Controls](#motion-controls)
+- [Team Games and History](#team-games-and-history)
+- [Deck Discovery and Round Filters](#deck-discovery-and-round-filters)
 - [Custom Decks](#custom-decks)
 - [Run the Checks](#run-the-checks)
 - [Static Hosting](#static-hosting)
@@ -27,7 +30,7 @@ Docker image for self-hosting.
 - [Reverse Proxy and HTTPS](#reverse-proxy-and-https)
 - [Run on Unraid](#run-on-unraid)
 - [Social Preview Metadata](#social-preview-metadata)
-- [Offline Support](#offline-support)
+- [Install and Offline Support](#install-and-offline-support)
 - [Troubleshooting](#troubleshooting)
 - [Security Notes](#security-notes)
 - [Project Structure](#project-structure)
@@ -50,14 +53,23 @@ Motion controls are optional. Touch buttons and keyboard shortcuts are always av
 - More than 70 built-in decks organized into browsable categories.
 - At least 50 shuffled cards in every built-in deck.
 - Fresh Fisher-Yates shuffle at the start of every round.
+- Local team games with optional player rosters, automatic turn rotation, and cumulative
+  scoreboards.
+- Persistent recent-round history, deck best scores, and anonymous CSV exports.
 - Optional motion controls with forehead calibration and neutral-position rearming.
+- Motion sensitivity presets and an in-app diagnostic screen.
 - Portrait-orientation reminder before a round starts.
+- Progressive-enhancement wake lock, fullscreen, and best-effort landscape locking.
 - Touch controls and keyboard shortcuts as reliable fallbacks.
 - Correct and Pass screen flashes, audio cues, and optional haptic feedback.
 - Persistent sound, vibration, and reverse-direction preferences.
-- Local custom deck creation, editing, copy, pasted-line import, JSON import, and export.
+- Deck search, favorites, recently played labels, random selection, classroom-safe filtering,
+  mixed-category play, and optional per-round card filters.
+- A button-controlled teacher review style that skips forehead calibration.
+- Local custom deck creation, editing, copy, pasted-line and CSV import, whole-library backup,
+  JSON import/export, URL sharing, bulk edits, and card reordering.
 - Recovery download when malformed custom-deck storage is detected.
-- Installable web manifest and offline app-shell caching.
+- Installable web manifest, offline app-shell caching, offline status, and update prompts.
 - Static hosting support and a hardened unprivileged Nginx container.
 
 ## Requirements
@@ -137,6 +149,28 @@ Browsers do not expose the phone's rotation-lock setting directly. Tilted can de
 viewport is still portrait and remind the player to disable Portrait Orientation Lock on
 iPhone or enable Auto-rotate on Android.
 
+## Team Games and History
+
+Choose **Team Game** from the home screen to create two or more teams. Each team can use its
+name as the phone holder, or provide a comma-separated optional roster so Tilted rotates
+players within that team across turns. Choose a total number of rounds or an optional target
+score, then pass the same phone between teams.
+
+Recent completed rounds stay in LocalStorage on that browser origin. **Round History** shows a
+compact local record and can export an anonymous CSV summary. The default export intentionally
+omits team and player names, which keeps classroom exports useful without turning Tilted into a
+student-data store.
+
+## Deck Discovery and Round Filters
+
+Use deck search, favorites, recently played labels, **Surprise Me**, or **Play Mixed Category**
+to move quickly through the built-in library. The classroom-safe toggle hides entertainment
+categories when a review session needs a narrower list.
+
+Round setup can filter cards by difficulty and subcategory, cycle back through a reshuffled
+deck when a fast team reaches the end, or stop after an optional pass limit. **Teacher review**
+uses visible buttons and skips motion setup for projector-led classroom play.
+
 ## Custom Decks
 
 Use **Create/Edit Decks** to create decks stored in the browser's LocalStorage. Built-in decks
@@ -145,10 +179,12 @@ are read-only, but each can be copied into an editable custom deck.
 Available editor actions:
 
 - Create, rename, and delete custom decks.
-- Add, edit, delete, and undo deletion of cards.
-- Paste one prompt per line.
+- Add, edit, reorder, bulk categorize, bulk delete, and undo deletion of cards.
+- Paste one prompt per line or import card rows from CSV.
 - Import a full typed deck from JSON.
-- Export a deck as JSON for backup or sharing.
+- Export a deck as JSON or CSV and back up or restore the whole custom-deck library.
+- Share a deck through the native share sheet or a URL fragment that can be imported on a
+  second device without an account or server.
 - Download a recovery backup if malformed saved content is detected.
 
 Custom-deck data stays in the browser and site URL that created it. Changing the hostname,
@@ -169,11 +205,23 @@ npm ci
 npm run typecheck
 npm test -- --run
 npm run build
+npm run verify:static
 npm audit
 ```
 
-The pull-request workflow runs type checks, unit tests, and the production build. Dependabot
-checks npm packages and GitHub Actions weekly.
+The pull-request workflow runs type checks, unit tests, the production build, and static-output
+checks. The container-publishing workflow repeats those checks before pushing an image.
+Dependabot checks npm packages, GitHub Actions, and Docker base images weekly.
+
+With Docker running, smoke-test the exact production container locally:
+
+```bash
+npm run verify:container
+```
+
+That command builds the image, runs it with a read-only filesystem and dropped capabilities,
+checks `/healthz`, confirms the served security headers, and verifies runtime metadata
+injection.
 
 ## Static Hosting
 
@@ -186,6 +234,8 @@ npm run build
 
 Publish the generated `dist/` directory to GitHub Pages, Netlify, Vercel, or another static
 host. Tilted uses relative asset URLs so it works from a subdirectory as well as a root domain.
+The included `public/_headers` and `vercel.json` provide matching security-header examples for
+Netlify-style static hosts and Vercel.
 
 Use HTTPS if players need motion controls on mobile devices.
 
@@ -212,6 +262,8 @@ The runtime container:
 - Sets `no-new-privileges`.
 - Mounts a small writable `/tmp` filesystem required by Nginx.
 - Exposes `/healthz` for container health checks.
+- Copies immutable build output into `/tmp` at startup so deployment-specific social metadata
+  can be injected without rebuilding the image.
 
 Custom decks remain in browser LocalStorage, so updating the image does not remove a user's
 decks when the public site URL stays the same.
@@ -261,6 +313,15 @@ The bundled Nginx configuration adds:
 If your reverse proxy also sets security headers, verify that it does not replace the
 container's policy with one that blocks service workers or device-orientation APIs.
 
+After the HTTPS public hostname is stable and verified, configure HSTS at the TLS-terminating
+reverse proxy:
+
+```text
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+```
+
+Do not add `preload` until every relevant subdomain is permanently HTTPS-ready.
+
 ## Run on Unraid
 
 Create a Docker container in Unraid with these values:
@@ -272,6 +333,8 @@ Create a Docker container in Unraid with these values:
 | Host port | Any available port, such as `8080` |
 | Network type | Your reverse-proxy-compatible Docker network |
 | Restart policy | `unless-stopped` |
+| `TILTED_PUBLIC_URL` | Optional HTTPS public app URL for social previews |
+| `TILTED_SHARE_IMAGE_URL` | Optional absolute HTTPS cover-image URL for social previews |
 
 Point your reverse proxy upstream to `http://<unraid-ip>:8080`, or use the container name and
 port if the proxy shares its Docker network. Use an HTTPS public URL for mobile motion access.
@@ -281,8 +344,16 @@ Unraid with a GitHub username and personal access token that has package-read pe
 
 ## Social Preview Metadata
 
-Tilted includes Open Graph and Twitter/X card metadata. Public deployments can customize the
-canonical URL and social preview image at build time:
+Tilted includes Open Graph and Twitter/X card metadata. For the published container, customize
+the canonical URL and social preview image at runtime:
+
+```bash
+TILTED_PUBLIC_URL=https://tilted.example.com \
+TILTED_SHARE_IMAGE_URL=https://tilted.example.com/assets/tilted-cover.png \
+docker compose up -d
+```
+
+Static deployments can customize the same values at build time:
 
 ```bash
 VITE_PUBLIC_URL=https://tilted.example.com \
@@ -299,17 +370,21 @@ docker build \
   -t tilted:custom .
 ```
 
-The defaults point to the canonical public repository assets so zero-configuration builds
-still produce a valid rich preview.
+The Docker runtime variables take precedence over the image defaults. The defaults point to
+the canonical public repository assets so zero-configuration builds still produce a valid
+rich preview.
 
-## Offline Support
+## Install and Offline Support
 
 The production build registers a small service worker that caches the app shell and fills its
 cache with same-origin static assets as they are requested. After the first successful load,
 the core interface and built-in deck bundle remain available during a temporary network loss.
 
-When deploying an update, keep `index.html` and `sw.js` uncached at the proxy so browsers can
-discover new versions promptly.
+On browsers that expose an install prompt, Tilted offers an **Install app** banner. On iPhone
+or iPad, tap Share and then **Add to Home Screen**. Tilted also displays an offline indicator
+and an update banner when a new service worker is ready. Cache revisions are bumped when the
+offline shell changes; keep `index.html` and `sw.js` uncached at the proxy so browsers can
+discover updates promptly.
 
 ## Troubleshooting
 
@@ -350,6 +425,8 @@ curl http://127.0.0.1:8080/healthz
 
 - The deployed app is client-only and has no backend or account system.
 - Custom deck data stays in browser LocalStorage.
+- Team rosters and recent history stay in browser LocalStorage or in-memory session state.
+- Anonymous CSV export is the default for round and history downloads.
 - React escapes rendered card content.
 - Imports are validated and size-limited before storage.
 - The runtime image is unprivileged, read-only, and capability-dropped.
@@ -361,8 +438,9 @@ curl http://127.0.0.1:8080/healthz
 ```text
 .
 ├── .github/               # CI, GHCR publishing, and Dependabot
-├── deploy/nginx.conf      # Static server and security headers
+├── deploy/                # Static server, runtime metadata injection, and headers
 ├── public/                # Favicons, share image, manifest, and service worker
+├── scripts/               # Static-output and container smoke checks
 ├── src/components/        # Screen-state UI
 ├── src/data/              # Built-in guessing decks
 ├── src/hooks/             # Timer, orientation, and motion behavior

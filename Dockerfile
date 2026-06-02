@@ -16,6 +16,7 @@ RUN npm run build
 FROM nginxinc/nginx-unprivileged:stable-alpine@sha256:0a1e718ff1e1a22fc519d0c2e5b6872681f01e37c8a2817ec43ce6e716103929
 
 COPY --chown=nginx:nginx deploy/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --chown=nginx:nginx deploy/40-runtime-metadata.sh /docker-entrypoint.d/40-runtime-metadata.sh
 COPY --from=build --chown=nginx:nginx /app/dist /usr/share/nginx/html
 
 EXPOSE 8080

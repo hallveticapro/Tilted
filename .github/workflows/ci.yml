@@ -34,3 +34,6 @@ jobs:
 
       - name: Build production bundle
         run: npm run build
+
+      - name: Verify generated static bundle
+        run: npm run verify:static

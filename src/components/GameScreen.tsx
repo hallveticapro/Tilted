@@ -10,7 +10,9 @@ import type {
   RoundResult,
   RoundSettings,
   TiltAction,
+  GameMode,
 } from "../types";
+import { createId } from "../utils/id";
 
 interface GameScreenProps {
   deck: Deck;
@@ -19,6 +21,11 @@ interface GameScreenProps {
   motionAction: TiltAction | null;
   onRoundEnd: (result: RoundResult) => void;
   onQuit: () => void;
+  notice?: string | null;
+  gameMode?: GameMode;
+  teamId?: string;
+  teamName?: string;
+  playerName?: string;
 }
 
 const FEEDBACK_DURATION_MS = 500;
@@ -36,11 +43,19 @@ export function buildRoundResult(
   deck: Deck,
   durationSeconds: number,
   outcomes: RoundCardResult[],
+  context: { gameMode?: GameMode; teamId?: string; teamName?: string; playerName?: string } = {},
 ): RoundResult {
   return {
+    id: createId("round"),
+    completedAt: new Date().toISOString(),
     deckId: deck.id,
     deckName: deck.name,
     durationSeconds,
+    gameMode: context.gameMode ?? "quick",
+    teamId: context.teamId,
+    teamName: context.teamName,
+    playerName: context.playerName,
+    outcomes,
     correctCards: outcomes.filter(({ outcome }) => outcome === "correct").map(({ card }) => card),
     passedCards: outcomes.filter(({ outcome }) => outcome === "pass").map(({ card }) => card),
   };
@@ -53,8 +68,22 @@ export function GameScreen({
   motionAction,
   onRoundEnd,
   onQuit,
+  notice,
+  gameMode = "quick",
+  teamId,
+  teamName,
+  playerName,
 }: GameScreenProps) {
-  const cards = useMemo(() => shuffleCards(deck.cards), [deck.cards]);
+  const eligibleCards = useMemo(
+    () =>
+      deck.cards.filter(
+        (card) =>
+          (settings.difficultyFilter === "all" || card.difficulty === settings.difficultyFilter) &&
+          (!settings.subcategoryFilter || card.category === settings.subcategoryFilter),
+      ),
+    [deck.cards, settings.difficultyFilter, settings.subcategoryFilter],
+  );
+  const [cards, setCards] = useState(() => shuffleCards(eligibleCards));
   const [cardIndex, setCardIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [passCount, setPassCount] = useState(0);
@@ -66,6 +95,7 @@ export function GameScreen({
   const handledMotionActionRef = useRef(0);
   const feedbackTimeoutRef = useRef<number | null>(null);
   const completionTimeoutRef = useRef<number | null>(null);
+  const inputLockedRef = useRef(false);
 
   const finishRound = useCallback(
     (outcomes = outcomesRef.current) => {
@@ -74,9 +104,16 @@ export function GameScreen({
       }
 
       finishedRef.current = true;
-      onRoundEnd(buildRoundResult(deck, settings.durationSeconds, outcomes));
+      onRoundEnd(
+        buildRoundResult(deck, settings.durationSeconds, outcomes, {
+          gameMode,
+          teamId,
+          teamName,
+          playerName,
+        }),
+      );
     },
-    [deck, onRoundEnd, settings.durationSeconds],
+    [deck, gameMode, onRoundEnd, playerName, settings.durationSeconds, teamId, teamName],
   );
 
   const { remainingSeconds, isPaused, togglePause } = useTimer({
@@ -86,9 +123,10 @@ export function GameScreen({
 
   const recordOutcome = useCallback(
     (outcome: CardOutcome) => {
-      if (finishedRef.current || isPaused) {
+      if (finishedRef.current || isPaused || inputLockedRef.current) {
         return;
       }
+      inputLockedRef.current = true;
 
       const card = cards[cardIndex];
       if (!card) {
@@ -105,6 +143,7 @@ export function GameScreen({
       }
       feedbackTimeoutRef.current = window.setTimeout(() => {
         setFeedback(null);
+        inputLockedRef.current = false;
         feedbackTimeoutRef.current = null;
       }, FEEDBACK_DURATION_MS);
 
@@ -121,16 +160,34 @@ export function GameScreen({
         setPassCount((current) => current + 1);
       }
 
-      if (cardIndex + 1 >= cards.length) {
+      const reachedPassLimit =
+        outcome === "pass" &&
+        settings.passLimit !== null &&
+        passCount + 1 >= settings.passLimit;
+      if (reachedPassLimit || (cardIndex + 1 >= cards.length && !settings.cycleDeck)) {
         completionTimeoutRef.current = window.setTimeout(() => {
           finishRound(nextOutcomes);
           completionTimeoutRef.current = null;
         }, FEEDBACK_DURATION_MS);
+      } else if (cardIndex + 1 >= cards.length) {
+        setCards(shuffleCards(eligibleCards));
+        setCardIndex(0);
       } else {
         setCardIndex((current) => current + 1);
       }
     },
-    [cardIndex, cards, finishRound, isPaused, settings.soundEnabled, settings.vibrationEnabled],
+    [
+      cardIndex,
+      cards,
+      eligibleCards,
+      finishRound,
+      isPaused,
+      passCount,
+      settings.cycleDeck,
+      settings.passLimit,
+      settings.soundEnabled,
+      settings.vibrationEnabled,
+    ],
   );
 
   useEffect(
@@ -180,7 +237,8 @@ export function GameScreen({
       : promptLength > 48
         ? "game-card__prompt--long"
         : "";
-  const hasActiveMotion = settings.motionEnabled && motionStatus === "calibrated";
+  const hasActiveMotion =
+    settings.gameplayStyle === "forehead" && settings.motionEnabled && motionStatus === "calibrated";
   const showMenuButton = hasActiveMotion && !isPaused;
   const showActionPanel = !isPaused && (!hasActiveMotion || showControls);
 
@@ -227,6 +285,7 @@ export function GameScreen({
           </button>
         )}
       </header>
+      {notice && <p className="game-notice notice notice--warning">{notice}</p>}
 
       <section className="game-card" aria-live="polite">
         {isPaused ? (

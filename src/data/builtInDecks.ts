@@ -32,6 +32,10 @@ function makePromptDeck({
     category,
     description: `Give clues for these ${descriptionName} without saying the answer.`,
     builtIn: true,
+    classroomSafe: !["Disney", "Movies & TV", "Music", "Heroes & Sci-Fi", "Theme Parks"].includes(
+      category,
+    ),
+    tags: [category],
     cards: makeCards(
       id,
       prompts.map((prompt) => word(prompt, name, "easy")),
@@ -69,6 +73,10 @@ export const builtInDecks: Deck[] = [
     category: "Education",
     description: "Describe math terms without saying the word on the card.",
     builtIn: true,
+    classroomSafe: true,
+    tags: ["Education", "Math"],
+    subject: "Math",
+    ageRange: "Grade 4",
     cards: makeCards("math", [
       word("Multiplication", "Operations", "easy"),
       word("Division", "Operations", "easy"),
@@ -102,6 +110,10 @@ export const builtInDecks: Deck[] = [
     category: "Education",
     description: "Give clues for science words without using the term itself.",
     builtIn: true,
+    classroomSafe: true,
+    tags: ["Education", "Science"],
+    subject: "Science",
+    ageRange: "Grade 4",
     cards: makeCards("science", [
       word("Matter", "Properties of matter", "easy"),
       word("Mass", "Properties of matter"),
@@ -135,6 +147,8 @@ export const builtInDecks: Deck[] = [
     category: "Just for Fun",
     description: "Quick, silly words for party-style clue rounds.",
     builtIn: true,
+    classroomSafe: true,
+    tags: ["Just for Fun", "Classroom safe"],
     cards: makeCards("fun", [
       word("Penguin", "Animals", "easy"),
       word("Octopus", "Animals", "easy"),
@@ -170,6 +184,10 @@ export const builtInDecks: Deck[] = [
     category: "Education",
     description: "Describe grade-appropriate words without saying them.",
     builtIn: true,
+    classroomSafe: true,
+    tags: ["Education", "Language arts"],
+    subject: "Language arts",
+    ageRange: "Grade 4",
     cards: makeCards("vocab", [
       word("Compare", "Academic vocabulary", "easy"),
       word("Contrast", "Academic vocabulary", "easy"),
