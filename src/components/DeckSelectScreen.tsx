@@ -97,10 +97,19 @@ export function DeckSelectScreen({
     `${deck.name} ${deck.description ?? ""} ${(deck.tags ?? []).join(" ")}`
       .toLocaleLowerCase()
       .includes(normalizedQuery);
-  const visibleBuiltInDecks = categoryBuiltInDecks.filter(matchesSearch);
+  const searchIsActive = Boolean(normalizedQuery);
+  const builtInDeckSearchBase = searchIsActive ? builtInDecks : categoryBuiltInDecks;
+  const visibleBuiltInDecks = builtInDeckSearchBase.filter(matchesSearch);
   const visibleCustomDecks = customDecks.filter(matchesSearch);
   const surpriseCandidates = [...visibleBuiltInDecks, ...visibleCustomDecks];
-  const mixedCategoryLabel = selectedCategory === ALL_CATEGORIES ? "all categories" : selectedCategory;
+  const mixedDeckLabel = searchIsActive
+    ? "Search Results"
+    : selectedCategory;
+  const mixedCategoryLabel = searchIsActive
+    ? "search results"
+    : selectedCategory === ALL_CATEGORIES
+      ? "all categories"
+      : selectedCategory;
 
   useEffect(() => {
     if (searchOpen) {
@@ -201,7 +210,7 @@ export function DeckSelectScreen({
                 className="button button--secondary button--small"
                 type="button"
                 aria-describedby="mixed-category-help"
-                onClick={() => onSelectMixed(visibleBuiltInDecks, selectedCategory)}
+                onClick={() => onSelectMixed(visibleBuiltInDecks, mixedDeckLabel)}
               >
                 Play Mixed Category
               </button>
@@ -215,7 +224,13 @@ export function DeckSelectScreen({
         )}
       </section>
       <div className="section-heading">
-        <h2>{selectedCategory === ALL_CATEGORIES ? "All built-in decks" : selectedCategory}</h2>
+        <h2>
+          {searchIsActive
+            ? "Search results"
+            : selectedCategory === ALL_CATEGORIES
+              ? "All built-in decks"
+              : selectedCategory}
+        </h2>
       </div>
       <section className="deck-grid" aria-label="Built-in decks">
         {visibleBuiltInDecks.map(renderDeckCard)}
