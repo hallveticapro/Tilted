@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Deck } from "../types";
 import { CategoryScroller } from "./CategoryScroller";
 import { ScreenLayout } from "./ScreenLayout";
@@ -11,10 +11,17 @@ interface DeckSelectScreenProps {
   onEditDecks: () => void;
   favoriteDeckIds: string[];
   recentDeckIds: string[];
-  classroomOnly: boolean;
-  onClassroomOnlyChange: (value: boolean) => void;
   onToggleFavorite: (deckId: string) => void;
   onSelectMixed: (decks: Deck[], label: string) => void;
+}
+
+function SearchIcon() {
+  return (
+    <svg aria-hidden="true" className="deck-search-icon" viewBox="0 0 24 24" focusable="false">
+      <path d="M10.8 17.2a6.4 6.4 0 1 0 0-12.8 6.4 6.4 0 0 0 0 12.8Z" />
+      <path d="m15.8 15.8 4.1 4.1" />
+    </svg>
+  );
 }
 
 function DeckCard({
@@ -66,8 +73,6 @@ export function DeckSelectScreen({
   onEditDecks,
   favoriteDeckIds,
   recentDeckIds,
-  classroomOnly,
-  onClassroomOnlyChange,
   onToggleFavorite,
   onSelectMixed,
 }: DeckSelectScreenProps) {
@@ -80,8 +85,8 @@ export function DeckSelectScreen({
   );
   const [selectedCategory, setSelectedCategory] = useState(() => categories[0] ?? ALL_CATEGORIES);
   const [query, setQuery] = useState("");
-  const [library, setLibrary] = useState<"all" | "built-in" | "custom">("all");
   const [searchOpen, setSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const categoryBuiltInDecks =
     selectedCategory === ALL_CATEGORIES
       ? builtInDecks
@@ -92,21 +97,22 @@ export function DeckSelectScreen({
     `${deck.name} ${deck.description ?? ""} ${(deck.tags ?? []).join(" ")}`
       .toLocaleLowerCase()
       .includes(normalizedQuery);
-  const visibleBuiltInDecks = categoryBuiltInDecks.filter(
-    (deck) => (!classroomOnly || deck.classroomSafe) && matchesSearch(deck),
-  );
+  const visibleBuiltInDecks = categoryBuiltInDecks.filter(matchesSearch);
   const visibleCustomDecks = customDecks.filter(matchesSearch);
-  const surpriseCandidates = [
-    ...(library === "custom" ? [] : visibleBuiltInDecks),
-    ...(library === "built-in" ? [] : visibleCustomDecks),
-  ];
-  const hasActiveDiscoveryFilters = Boolean(normalizedQuery) || library !== "all" || classroomOnly;
+  const surpriseCandidates = [...visibleBuiltInDecks, ...visibleCustomDecks];
   const mixedCategoryLabel = selectedCategory === ALL_CATEGORIES ? "all categories" : selectedCategory;
-  const clearDiscoveryFilters = () => {
+
+  useEffect(() => {
+    if (searchOpen) {
+      searchInputRef.current?.focus();
+    }
+  }, [searchOpen]);
+
+  const closeSearch = () => {
     setQuery("");
-    setLibrary("all");
-    onClassroomOnlyChange(false);
+    setSearchOpen(false);
   };
+
   const chooseSurprise = () => {
     const deck = surpriseCandidates[Math.floor(Math.random() * surpriseCandidates.length)];
     if (deck) {
@@ -142,16 +148,45 @@ export function DeckSelectScreen({
       />
       <section className="deck-toolbar" aria-label="Deck tools">
         <div className="deck-toolbar__main">
-          <button
-            className={`button button--ghost button--small deck-search-toggle ${hasActiveDiscoveryFilters ? "is-active" : ""}`}
-            type="button"
-            aria-label={searchOpen ? "Hide deck search and filters" : "Show deck search and filters"}
-            aria-expanded={searchOpen}
-            aria-controls="deck-search-filters"
-            onClick={() => setSearchOpen((current) => !current)}
-          >
-            <span className="deck-search-toggle__icon" aria-hidden="true" />
-          </button>
+          <div className={`deck-search-control ${searchOpen ? "is-open" : ""}`}>
+            {searchOpen ? (
+              <div className="deck-search-control__field">
+                <SearchIcon />
+                <input
+                  aria-label="Search decks"
+                  className="deck-search-control__input"
+                  ref={searchInputRef}
+                  type="search"
+                  placeholder="Search decks"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      closeSearch();
+                    }
+                  }}
+                />
+                <button
+                  className="deck-search-control__close"
+                  type="button"
+                  aria-label="Close deck search"
+                  onClick={closeSearch}
+                >
+                  ×
+                </button>
+              </div>
+            ) : (
+              <button
+                className="deck-search-control__button"
+                type="button"
+                aria-label="Search decks"
+                aria-expanded="false"
+                onClick={() => setSearchOpen(true)}
+              >
+                <SearchIcon />
+              </button>
+            )}
+          </div>
           <div className="deck-toolbar__actions">
             <button
               className="button button--secondary button--small"
@@ -161,7 +196,7 @@ export function DeckSelectScreen({
             >
               Surprise Me
             </button>
-            {library !== "custom" && visibleBuiltInDecks.length > 1 && (
+            {visibleBuiltInDecks.length > 1 && (
               <button
                 className="button button--secondary button--small"
                 type="button"
@@ -173,54 +208,31 @@ export function DeckSelectScreen({
             )}
           </div>
         </div>
-        {library !== "custom" && visibleBuiltInDecks.length > 1 && (
+        {visibleBuiltInDecks.length > 1 && (
           <p className="deck-mixed-help" id="mixed-category-help">
             Mixed category combines visible built-in decks in {mixedCategoryLabel} into one shuffled round.
           </p>
         )}
       </section>
-      {searchOpen && (
-        <section className="panel deck-discovery" id="deck-search-filters" aria-label="Deck search and filters">
-          <label>
-            <span className="field-label">Find a deck</span>
-            <input type="search" placeholder="Search decks" value={query} onChange={(event) => setQuery(event.target.value)} />
-          </label>
-          <div className="segmented-control segmented-control--three" role="group" aria-label="Deck library">
-            {(["all", "built-in", "custom"] as const).map((option) => (
-              <button className={library === option ? "is-selected" : ""} key={option} type="button" onClick={() => setLibrary(option)}>{option}</button>
-            ))}
-          </div>
-          <label className="toggle-row toggle-row--compact">
-            <span><strong>Classroom-safe decks only</strong></span>
-            <input aria-label="Show classroom-safe decks only" type="checkbox" checked={classroomOnly} onChange={(event) => onClassroomOnlyChange(event.target.checked)} />
-          </label>
-          {hasActiveDiscoveryFilters && (
-            <button className="button button--ghost button--small" type="button" onClick={clearDiscoveryFilters}>
-              Clear search and filters
-            </button>
-          )}
-        </section>
-      )}
-      {(library === "all" || library === "built-in") && <div className="section-heading">
+      <div className="section-heading">
         <h2>{selectedCategory === ALL_CATEGORIES ? "All built-in decks" : selectedCategory}</h2>
       </div>
-      }
-      {(library === "all" || library === "built-in") && <section className="deck-grid" aria-label="Built-in decks">
+      <section className="deck-grid" aria-label="Built-in decks">
         {visibleBuiltInDecks.map(renderDeckCard)}
-      </section>}
-      {(library === "all" || library === "custom") && <div className="section-heading">
+      </section>
+      <div className="section-heading">
         <h2>Your decks</h2>
         <button className="button button--small button--secondary" type="button" onClick={onEditDecks}>
           Manage decks
         </button>
-      </div>}
-      {(library === "all" || library === "custom") && (visibleCustomDecks.length > 0 ? (
+      </div>
+      {visibleCustomDecks.length > 0 ? (
         <section className="deck-grid" aria-label="Custom decks">
           {visibleCustomDecks.map(renderDeckCard)}
         </section>
       ) : (
         <p className="empty-state">No custom decks yet. Create one for your next review.</p>
-      ))}
+      )}
     </ScreenLayout>
   );
 }

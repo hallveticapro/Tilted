@@ -560,40 +560,85 @@ kbd {
   justify-content: flex-end;
   gap: 0.55rem;
   align-items: center;
+  margin-left: auto;
 }
 
-.deck-search-toggle {
-  width: 2.45rem;
-  min-height: 2.45rem;
+.deck-search-control {
+  width: 2.5rem;
+  max-width: min(100%, 19rem);
+  transition: width 190ms ease;
+}
+
+.deck-search-control.is-open {
+  width: min(19rem, 100%);
+}
+
+.deck-search-control__button,
+.deck-search-control__field {
+  display: flex;
+  width: 100%;
+  min-height: 2.5rem;
+  align-items: center;
+  border: 2px solid #d5e4df;
+  border-radius: 999px;
+  color: #17324d;
+  background: rgb(255 255 255 / 72%);
+  box-shadow: 0 3px 0 #d5e4df;
+}
+
+.deck-search-control__button {
+  justify-content: center;
   padding: 0;
 }
 
-.deck-search-toggle.is-active {
+.deck-search-control__field {
+  gap: 0.45rem;
   border-color: #8bc9c3;
-  background: #e1f5ef;
+  padding: 0 0.35rem 0 0.75rem;
+  background: white;
+  box-shadow: 0 3px 0 #a7d7d1;
 }
 
-.deck-search-toggle__icon {
-  position: relative;
-  display: inline-block;
-  width: 0.92rem;
-  height: 0.92rem;
-  border: 2px solid currentColor;
-  border-radius: 999px;
+.deck-search-icon {
+  width: 1.08rem;
+  height: 1.08rem;
   flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.7;
 }
 
-.deck-search-toggle__icon::after {
-  position: absolute;
-  right: -0.42rem;
-  bottom: -0.23rem;
-  width: 0.5rem;
-  height: 2px;
+.deck-search-control__input {
+  min-width: 0;
+  min-height: auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.deck-search-control__input:focus {
+  outline: none;
+}
+
+.deck-search-control__close {
+  display: grid;
+  width: 1.9rem;
+  height: 1.9rem;
+  place-items: center;
+  border: 0;
   border-radius: 999px;
-  background: currentColor;
-  content: "";
-  transform: rotate(45deg);
-  transform-origin: center;
+  color: #5a6d75;
+  background: #eef8f2;
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.deck-search-control__close:hover {
+  color: #17324d;
+  background: #e1f5ef;
 }
 
 .deck-mixed-help {
@@ -604,12 +649,6 @@ kbd {
   font-size: 0.82rem;
   line-height: 1.35;
   text-align: right;
-}
-
-.deck-discovery {
-  display: grid;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
 }
 
 .deck-card:hover {

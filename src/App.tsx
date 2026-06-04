@@ -28,13 +28,11 @@ import { addTeamRound, getActivePlayer, getActiveTeam, isTeamSessionComplete } f
 import { canUseBrowserStorage } from "./services/safeStorage";
 import {
   loadReverseTilt,
-  loadClassroomOnly,
   loadFavoriteDecks,
   loadSensitivity,
   loadSoundEffects,
   loadVibration,
   saveReverseTilt,
-  saveClassroomOnly,
   saveFavoriteDecks,
   saveSensitivity,
   saveSoundEffects,
@@ -67,7 +65,6 @@ function App() {
   const [customDecks, setCustomDecks] = useState<Deck[]>(() => loadCustomDecks());
   const [virtualDeck, setVirtualDeck] = useState<Deck | null>(null);
   const [favoriteDeckIds, setFavoriteDeckIds] = useState<string[]>(() => loadFavoriteDecks());
-  const [classroomOnly, setClassroomOnly] = useState(() => loadClassroomOnly());
   const [storageAvailable] = useState(() => canUseBrowserStorage());
   const [selectedDeckId, setSelectedDeckId] = useState(builtInDecks[0].id);
   const [roundResult, setRoundResult] = useState<RoundResult | null>(null);
@@ -373,11 +370,6 @@ function App() {
         onEditDecks={() => setScreen("editor")}
         favoriteDeckIds={favoriteDeckIds}
         recentDeckIds={history.map(({ deckId }) => deckId).slice(0, 6)}
-        classroomOnly={classroomOnly}
-        onClassroomOnlyChange={(value) => {
-          setClassroomOnly(value);
-          saveClassroomOnly(value);
-        }}
         onToggleFavorite={toggleFavoriteDeck}
         onSelectMixed={chooseMixedDeck}
       />

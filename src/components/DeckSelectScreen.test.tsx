@@ -44,8 +44,6 @@ describe("DeckSelectScreen", () => {
         onEditDecks={vi.fn()}
         favoriteDeckIds={[]}
         recentDeckIds={[]}
-        classroomOnly={false}
-        onClassroomOnlyChange={vi.fn()}
         onToggleFavorite={vi.fn()}
         onSelectMixed={vi.fn()}
       />,
@@ -82,8 +80,6 @@ describe("DeckSelectScreen", () => {
         onEditDecks={vi.fn()}
         favoriteDeckIds={[]}
         recentDeckIds={[]}
-        classroomOnly={false}
-        onClassroomOnlyChange={vi.fn()}
         onToggleFavorite={vi.fn()}
         onSelectMixed={vi.fn()}
       />,
@@ -91,12 +87,14 @@ describe("DeckSelectScreen", () => {
 
     expect(screen.queryByPlaceholderText("Search decks")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Show deck search and filters" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search decks" }));
 
     expect(screen.getByPlaceholderText("Search decks")).toBeVisible();
-    expect(screen.getByRole("group", { name: "Deck library" })).toBeVisible();
+    expect(screen.getByRole("searchbox", { name: "Search decks" })).toBeVisible();
+    expect(screen.queryByRole("group", { name: "Deck library" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "Show classroom-safe decks only" })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Hide deck search and filters" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close deck search" }));
     expect(screen.queryByPlaceholderText("Search decks")).not.toBeInTheDocument();
 
     fireEvent.click(within(screen.getByRole("navigation", { name: "Deck categories" })).getByRole("button", { name: "All" }));
