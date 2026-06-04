@@ -49,10 +49,10 @@ describe("DeckSelectScreen", () => {
       />,
     );
 
-    const categoryNav = screen.getByRole("navigation", { name: "Deck categories" });
-    const builtInRegion = screen.getByRole("region", { name: "Built-in decks" });
+    const categoryNav = screen.getByRole("navigation", { name: "Deck Categories" });
+    const builtInRegion = screen.getByRole("region", { name: "Built-In Decks" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Scroll categories right" }));
+    fireEvent.click(screen.getByRole("button", { name: "Scroll Categories Right" }));
     expect(scrollBy).toHaveBeenCalledWith({ left: 180, behavior: "smooth" });
     expect(within(categoryNav).getByRole("button", { name: "Education" })).toHaveAttribute(
       "aria-pressed",
@@ -85,19 +85,19 @@ describe("DeckSelectScreen", () => {
       />,
     );
 
-    expect(screen.queryByPlaceholderText("Search decks")).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Search Decks")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Search decks" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search Decks" }));
 
-    expect(screen.getByPlaceholderText("Search decks")).toBeVisible();
-    expect(screen.getByRole("searchbox", { name: "Search decks" })).toBeVisible();
+    expect(screen.getByPlaceholderText("Search Decks")).toBeVisible();
+    expect(screen.getByRole("searchbox", { name: "Search Decks" })).toBeVisible();
     expect(screen.queryByRole("group", { name: "Deck library" })).not.toBeInTheDocument();
     expect(screen.queryByRole("checkbox", { name: "Show classroom-safe decks only" })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Close deck search" }));
-    expect(screen.queryByPlaceholderText("Search decks")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Close Deck Search" }));
+    expect(screen.queryByPlaceholderText("Search Decks")).not.toBeInTheDocument();
 
-    fireEvent.click(within(screen.getByRole("navigation", { name: "Deck categories" })).getByRole("button", { name: "All" }));
+    fireEvent.click(within(screen.getByRole("navigation", { name: "Deck Categories" })).getByRole("button", { name: "All" }));
     expect(screen.getByRole("button", { name: "Play Mixed Category" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Explain Play Mixed Category" })).not.toBeInTheDocument();
     expect(screen.getByText(/Mixed category combines visible built-in decks/)).toBeVisible();
@@ -118,8 +118,8 @@ describe("DeckSelectScreen", () => {
       />,
     );
 
-    const categoryNav = screen.getByRole("navigation", { name: "Deck categories" });
-    const builtInRegion = screen.getByRole("region", { name: "Built-in decks" });
+    const categoryNav = screen.getByRole("navigation", { name: "Deck Categories" });
+    const builtInRegion = screen.getByRole("region", { name: "Built-In Decks" });
 
     expect(within(categoryNav).getByRole("button", { name: "Education" })).toHaveAttribute(
       "aria-pressed",
@@ -127,12 +127,12 @@ describe("DeckSelectScreen", () => {
     );
     expect(within(builtInRegion).queryByRole("button", { name: "Animals" })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Search decks" }));
-    fireEvent.change(screen.getByRole("searchbox", { name: "Search decks" }), {
+    fireEvent.click(screen.getByRole("button", { name: "Search Decks" }));
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search Decks" }), {
       target: { value: "animals" },
     });
 
-    expect(screen.getByRole("heading", { name: "Search results" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Search Results" })).toBeVisible();
     expect(within(builtInRegion).getByRole("button", { name: "Animals" })).toBeVisible();
     expect(within(builtInRegion).queryByRole("button", { name: "Math" })).not.toBeInTheDocument();
   });

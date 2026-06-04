@@ -49,33 +49,33 @@ export function RoundSetupScreen({
       compact
       actions={
         <button className="button button--ghost" type="button" onClick={onChooseDeck}>
-          Change deck
+          Change Deck
         </button>
       }
     >
       <section className="panel stack">
         <div>
-          <h2>Play style</h2>
-          <div className="segmented-control segmented-control--two" role="group" aria-label="Play style">
+          <h2>Play Style</h2>
+          <div className="segmented-control segmented-control--two" role="group" aria-label="Play Style">
             <button
-              className={settings.gameplayStyle === "forehead" ? "is-selected" : ""}
+              className={settings.gameplayStyle === "forehead" && settings.motionEnabled ? "is-selected" : ""}
               type="button"
-              onClick={() => update({ gameplayStyle: "forehead" })}
+              onClick={() => update({ gameplayStyle: "forehead", motionEnabled: true })}
             >
-              Forehead game
+              Tilt On
             </button>
             <button
-              className={settings.gameplayStyle === "review" ? "is-selected" : ""}
+              className={settings.gameplayStyle === "review" || !settings.motionEnabled ? "is-selected" : ""}
               type="button"
-              onClick={() => update({ gameplayStyle: "review" })}
+              onClick={() => update({ gameplayStyle: "review", motionEnabled: false })}
             >
-              Teacher review
+              Tilt Off
             </button>
           </div>
         </div>
         <div>
-          <h2>Round length</h2>
-          <div className="segmented-control" role="group" aria-label="Round length">
+          <h2>Round Length</h2>
+          <div className="segmented-control" role="group" aria-label="Round Length">
             {durations.map((duration) => (
               <button
                 className={settings.durationSeconds === duration ? "is-selected" : ""}
@@ -88,25 +88,13 @@ export function RoundSetupScreen({
             ))}
           </div>
         </div>
-        {settings.gameplayStyle === "forehead" && <label className="toggle-row">
-          <span>
-            <strong>Motion controls</strong>
-            <small>Tilt to move through cards. Fallback buttons stay in the menu.</small>
-          </span>
-          <input
-            aria-label="Use motion controls"
-            type="checkbox"
-            checked={settings.motionEnabled}
-            onChange={(event) => update({ motionEnabled: event.target.checked })}
-          />
-        </label>}
         <label className="toggle-row">
           <span>
-            <strong>Sound effects</strong>
+            <strong>Sound Effects</strong>
             <small>Play distinct cues for correct answers and passes.</small>
           </span>
           <input
-            aria-label="Use sound effects"
+            aria-label="Use Sound Effects"
             type="checkbox"
             checked={settings.soundEnabled}
             onChange={(event) => update({ soundEnabled: event.target.checked })}
@@ -118,7 +106,7 @@ export function RoundSetupScreen({
             <small>Use short haptic feedback when this device supports it.</small>
           </span>
           <input
-            aria-label="Use vibration"
+            aria-label="Use Vibration"
             type="checkbox"
             checked={settings.vibrationEnabled}
             onChange={(event) => update({ vibrationEnabled: event.target.checked })}
@@ -147,11 +135,11 @@ export function RoundSetupScreen({
             {settings.gameplayStyle === "forehead" && settings.motionEnabled && (
               <label className="toggle-row">
                 <span>
-                  <strong>Reverse tilt directions</strong>
+                  <strong>Reverse Tilt Directions</strong>
                   <small>Down becomes Pass and up becomes Correct.</small>
                 </span>
                 <input
-                  aria-label="Reverse tilt directions"
+                  aria-label="Reverse Tilt Directions"
                   type="checkbox"
                   checked={settings.reverseTilt}
                   onChange={(event) => update({ reverseTilt: event.target.checked })}
@@ -165,11 +153,11 @@ export function RoundSetupScreen({
             )}
             <label className="toggle-row">
               <span>
-                <strong>Fullscreen during rounds</strong>
+                <strong>Fullscreen During Rounds</strong>
                 <small>Use the largest stable view when this browser supports fullscreen.</small>
               </span>
               <input
-                aria-label="Use fullscreen during rounds"
+                aria-label="Use Fullscreen During Rounds"
                 type="checkbox"
                 checked={settings.fullscreenEnabled}
                 onChange={(event) => update({ fullscreenEnabled: event.target.checked })}
@@ -177,8 +165,8 @@ export function RoundSetupScreen({
             </label>
             {settings.gameplayStyle === "forehead" && settings.motionEnabled && (
               <div>
-                <h2>Tilt sensitivity</h2>
-                <div className="segmented-control segmented-control--three" role="group" aria-label="Tilt sensitivity">
+                <h2>Tilt Sensitivity</h2>
+                <div className="segmented-control segmented-control--three" role="group" aria-label="Tilt Sensitivity">
                   {(Object.keys(thresholds) as RoundSettings["sensitivityPreset"][]).map((preset) => (
                     <button
                       className={settings.sensitivityPreset === preset ? "is-selected" : ""}
@@ -186,14 +174,14 @@ export function RoundSetupScreen({
                       type="button"
                       onClick={() => update({ sensitivityPreset: preset, tiltThreshold: thresholds[preset] })}
                     >
-                      {preset}
+                      {preset[0].toUpperCase() + preset.slice(1)}
                     </button>
                   ))}
                 </div>
               </div>
             )}
             <div>
-              <h2>Card filters</h2>
+              <h2>Card Filters</h2>
               <div className="setup-grid">
                 <label>
                   <span className="field-label">Difficulty</span>
@@ -201,7 +189,7 @@ export function RoundSetupScreen({
                     value={settings.difficultyFilter}
                     onChange={(event) => update({ difficultyFilter: event.target.value as RoundSettings["difficultyFilter"] })}
                   >
-                    <option value="all">All difficulties</option>
+                    <option value="all">All Difficulties</option>
                     <option value="easy">Easy</option>
                     <option value="medium">Medium</option>
                     <option value="hard">Hard</option>
@@ -210,7 +198,7 @@ export function RoundSetupScreen({
                 <label>
                   <span className="field-label">Subcategory</span>
                   <select value={settings.subcategoryFilter} onChange={(event) => update({ subcategoryFilter: event.target.value })}>
-                    <option value="">All subcategories</option>
+                    <option value="">All Subcategories</option>
                     {subcategories.map((category) => <option key={category}>{category}</option>)}
                   </select>
                 </label>
@@ -219,23 +207,23 @@ export function RoundSetupScreen({
             </div>
             <label className="toggle-row">
               <span>
-                <strong>Cycle cards if needed</strong>
+                <strong>Cycle Cards If Needed</strong>
                 <small>Shuffle and reuse the deck if the team reaches the end before time expires.</small>
               </span>
               <input
-                aria-label="Cycle cards if needed"
+                aria-label="Cycle Cards If Needed"
                 type="checkbox"
                 checked={settings.cycleDeck}
                 onChange={(event) => update({ cycleDeck: event.target.checked })}
               />
             </label>
             <label>
-              <span className="field-label">Optional pass limit</span>
+              <span className="field-label">Optional Pass Limit</span>
               <select value={settings.passLimit ?? ""} onChange={(event) => update({ passLimit: event.target.value ? Number(event.target.value) : null })}>
-                <option value="">No pass limit</option>
-                <option value="3">3 passes</option>
-                <option value="5">5 passes</option>
-                <option value="10">10 passes</option>
+                <option value="">No Pass Limit</option>
+                <option value="3">3 Passes</option>
+                <option value="5">5 Passes</option>
+                <option value="10">10 Passes</option>
               </select>
             </label>
           </section>
@@ -251,7 +239,7 @@ export function RoundSetupScreen({
             <p>{motionError}</p>
             {settings.motionEnabled && (
               <button className="button button--secondary" type="button" onClick={onContinueWithoutMotion}>
-                Continue with buttons
+                Continue With Buttons
               </button>
             )}
           </div>

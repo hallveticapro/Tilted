@@ -173,11 +173,11 @@ describe("GameScreen", () => {
       />,
     );
 
-    expect(screen.queryByRole("region", { name: "Card actions" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Show controls" }));
-    expect(screen.getByRole("region", { name: "Card actions" })).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "Hide controls" }));
-    expect(screen.queryByRole("region", { name: "Card actions" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Card Actions" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show Controls" }));
+    expect(screen.getByRole("region", { name: "Card Actions" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Hide Controls" }));
+    expect(screen.queryByRole("region", { name: "Card Actions" })).not.toBeInTheDocument();
   });
 
   it("shows a quit option inside the compact paused card", () => {
@@ -194,8 +194,8 @@ describe("GameScreen", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Pause" }));
-    expect(screen.getByText("Round paused")).toBeVisible();
-    expect(screen.queryByRole("region", { name: "Card actions" })).not.toBeInTheDocument();
+    expect(screen.getByText("Round Paused")).toBeVisible();
+    expect(screen.queryByRole("region", { name: "Card Actions" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Quit Round" }));
     expect(onQuit).toHaveBeenCalledTimes(1);
   });

@@ -44,16 +44,17 @@ describe("RoundSetupScreen", () => {
       />,
     );
 
-    expect(screen.getByRole("group", { name: "Play style" })).toBeVisible();
-    expect(screen.getByRole("group", { name: "Round length" })).toBeVisible();
-    expect(screen.getByRole("checkbox", { name: "Use motion controls" })).toBeVisible();
-    expect(screen.getByRole("checkbox", { name: "Use sound effects" })).toBeVisible();
-    expect(screen.getByRole("checkbox", { name: "Use vibration" })).toBeVisible();
+    expect(screen.getByRole("group", { name: "Play Style" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Tilt On" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Tilt Off" })).toBeVisible();
+    expect(screen.getByRole("group", { name: "Round Length" })).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: "Use Sound Effects" })).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: "Use Vibration" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Start Round" })).toBeVisible();
 
-    expect(screen.queryByRole("checkbox", { name: "Reverse tilt directions" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "Reverse Tilt Directions" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Test Motion Controls" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("group", { name: "Tilt sensitivity" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Tilt Sensitivity" })).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Difficulty")).not.toBeInTheDocument();
     expect(screen.queryByText(/Motion access will be requested/)).not.toBeInTheDocument();
 
@@ -66,9 +67,9 @@ describe("RoundSetupScreen", () => {
       "aria-expanded",
       "true",
     );
-    expect(screen.getByRole("checkbox", { name: "Reverse tilt directions" })).toBeVisible();
+    expect(screen.getByRole("checkbox", { name: "Reverse Tilt Directions" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Test Motion Controls" })).toBeVisible();
-    expect(screen.getByRole("group", { name: "Tilt sensitivity" })).toBeVisible();
+    expect(screen.getByRole("group", { name: "Tilt Sensitivity" })).toBeVisible();
     expect(screen.getByLabelText("Difficulty")).toBeVisible();
     expect(screen.getByText(/Motion access will be requested/)).toBeVisible();
   });

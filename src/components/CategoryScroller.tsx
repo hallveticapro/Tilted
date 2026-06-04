@@ -67,7 +67,7 @@ export function CategoryScroller({
       <button
         className="category-scroller__arrow category-scroller__arrow--left"
         type="button"
-        aria-label="Scroll categories left"
+        aria-label="Scroll Categories Left"
         disabled={!canScrollLeft}
         onClick={() => scroll(-1)}
       >
@@ -89,7 +89,7 @@ export function CategoryScroller({
       <button
         className="category-scroller__arrow category-scroller__arrow--right"
         type="button"
-        aria-label="Scroll categories right"
+        aria-label="Scroll Categories Right"
         disabled={!canScrollRight}
         onClick={() => scroll(1)}
       >

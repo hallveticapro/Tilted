@@ -37,7 +37,7 @@ describe("App landscape gate", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Quick Round" }));
     fireEvent.click(screen.getByRole("button", { name: "4th Grade Math Review" }));
-    fireEvent.click(screen.getByRole("checkbox", { name: "Use motion controls" }));
+    fireEvent.click(screen.getByRole("button", { name: "Tilt Off" }));
     fireEvent.click(screen.getByRole("button", { name: "Start Round" }));
 
     expect(screen.getByRole("heading", { name: "Turn your phone sideways" })).toBeVisible();
@@ -46,12 +46,13 @@ describe("App landscape gate", () => {
 
     setViewport(844, 390);
     expect(screen.getByText("Ready?")).toBeVisible();
+    expect(screen.queryByText(/Down = Correct/)).not.toBeInTheDocument();
 
     act(() => vi.advanceTimersByTime(1000));
     act(() => vi.advanceTimersByTime(1000));
     act(() => vi.advanceTimersByTime(1000));
 
-    expect(screen.getByRole("region", { name: "Card actions" })).toBeVisible();
+    expect(screen.getByRole("region", { name: "Card Actions" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Correct" })).toBeVisible();
   });
 
@@ -76,11 +77,12 @@ describe("App landscape gate", () => {
       await Promise.resolve();
     });
 
-    const fallbackButton = screen.getByRole("button", { name: "Continue with buttons" });
+    const fallbackButton = screen.getByRole("button", { name: "Continue With Buttons" });
     expect(screen.getByText(/Motion permission was denied/)).toBeVisible();
 
     fireEvent.click(fallbackButton);
     expect(screen.getByText("Ready?")).toBeVisible();
+    expect(screen.queryByText(/Down = Correct/)).not.toBeInTheDocument();
   });
 
   it("shows the first Team Game phone-holder handoff after deck selection", () => {

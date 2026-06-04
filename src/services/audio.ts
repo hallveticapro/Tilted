@@ -8,7 +8,7 @@ type AudioWindow = Window &
 let audioContext: AudioContext | null = null;
 
 function getAudioContext(): AudioContext | null {
-  if (audioContext) {
+  if (audioContext && audioContext.state !== "closed") {
     return audioContext;
   }
 
@@ -22,10 +22,39 @@ function getAudioContext(): AudioContext | null {
   return audioContext;
 }
 
-export function primeAudio() {
+function playSilentUnlock(context: AudioContext): void {
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  gain.gain.value = 0;
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.start();
+  oscillator.stop(context.currentTime + 0.03);
+}
+
+export async function primeAudio(): Promise<boolean> {
   const context = getAudioContext();
+  if (!context) {
+    return false;
+  }
+
   if (context?.state === "suspended") {
-    void context.resume().catch(() => undefined);
+    try {
+      await context.resume();
+    } catch {
+      return false;
+    }
+  }
+
+  if (context.state !== "running") {
+    return false;
+  }
+
+  try {
+    playSilentUnlock(context);
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -53,9 +82,12 @@ export function playReadyTrill() {
   };
 
   if (context.state === "suspended") {
-    void context
-      .resume()
-      .then(play)
+    void primeAudio()
+      .then((ready) => {
+        if (ready) {
+          play();
+        }
+      })
       .catch(() => undefined);
     return;
   }
@@ -89,9 +121,12 @@ export function playOutcomeSound(outcome: CardOutcome) {
   };
 
   if (context.state === "suspended") {
-    void context
-      .resume()
-      .then(play)
+    void primeAudio()
+      .then((ready) => {
+        if (ready) {
+          play();
+        }
+      })
       .catch(() => undefined);
     return;
   }

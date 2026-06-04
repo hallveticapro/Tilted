@@ -92,6 +92,7 @@ function App() {
     passLimit: null,
     fullscreenEnabled: false,
   }));
+  const tiltModeEnabled = settings.gameplayStyle === "forehead" && settings.motionEnabled;
 
   const decks = useMemo(
     () => [...builtInDecks, ...customDecks, ...(virtualDeck ? [virtualDeck] : [])],
@@ -100,7 +101,7 @@ function App() {
   const selectedDeck = decks.find((deck) => deck.id === selectedDeckId) ?? builtInDecks[0];
   const isPortrait = useLandscapeOrientation();
   const motion = useMotionControls({
-    enabled: settings.motionEnabled && settings.gameplayStyle === "forehead",
+    enabled: tiltModeEnabled,
     reverseTilt: settings.reverseTilt,
     threshold: settings.tiltThreshold,
     publishSamples: screen === "motion-test",
@@ -148,8 +149,7 @@ function App() {
         setScreen("forehead-setup");
       } else {
         if (
-          settings.gameplayStyle === "forehead" &&
-          settings.motionEnabled &&
+          tiltModeEnabled &&
           motion.permission === "granted"
         ) {
           motion.startCalibration();
@@ -161,8 +161,7 @@ function App() {
       motion.beginForeheadSetup,
       motion.permission,
       motion.startCalibration,
-      settings.gameplayStyle,
-      settings.motionEnabled,
+      tiltModeEnabled,
     ],
   );
   const beginCountdown = useCallback(() => continueToRound("countdown"), [continueToRound]);
@@ -173,8 +172,7 @@ function App() {
   }, [motion.resetCalibration, roundDisplay.release]);
   const finishCountdown = useCallback(() => {
     if (
-      settings.gameplayStyle === "forehead" &&
-      settings.motionEnabled &&
+      tiltModeEnabled &&
       motion.permission === "granted"
     ) {
       const calibrated = motion.finishCalibration();
@@ -190,8 +188,7 @@ function App() {
   }, [
     motion.finishCalibration,
     motion.permission,
-    settings.gameplayStyle,
-    settings.motionEnabled,
+    tiltModeEnabled,
     startGame,
   ]);
 
@@ -221,12 +218,12 @@ function App() {
   const startRound = async () => {
     void roundDisplay.engage(settings.fullscreenEnabled);
     if (settings.soundEnabled) {
-      primeAudio();
+      void primeAudio();
     }
     setRoundResult(null);
     motion.resetCalibration();
 
-    if (!settings.motionEnabled || settings.gameplayStyle === "review") {
+    if (!tiltModeEnabled) {
       startWhenLandscape("countdown", "setup");
       return;
     }
@@ -242,7 +239,10 @@ function App() {
 
   const continueWithoutMotion = () => {
     void roundDisplay.engage(settings.fullscreenEnabled);
-    const nextSettings = { ...settings, motionEnabled: false };
+    if (settings.soundEnabled) {
+      void primeAudio();
+    }
+    const nextSettings = { ...settings, gameplayStyle: "review" as const, motionEnabled: false };
     updateSettings(nextSettings);
     startWhenLandscape("countdown", "setup");
   };
@@ -282,10 +282,12 @@ function App() {
 
   const playAgain = () => {
     void roundDisplay.engage(settings.fullscreenEnabled);
+    if (settings.soundEnabled) {
+      void primeAudio();
+    }
     setRoundResult(null);
     if (
-      settings.gameplayStyle === "forehead" &&
-      settings.motionEnabled &&
+      tiltModeEnabled &&
       motion.permission === "granted"
     ) {
       motion.resetCalibration();
@@ -420,6 +422,7 @@ function App() {
     return (
       <CountdownScreen
         reverseTilt={settings.reverseTilt}
+        showTiltHint={tiltModeEnabled}
         onComplete={finishCountdown}
         onCancel={cancelPreGame}
       />

@@ -48,7 +48,7 @@ export function MotionDiagnosticScreen({
   };
 
   return (
-    <ScreenLayout title="Test Motion" eyebrow="Device diagnostics" compact actions={<button className="button button--ghost" type="button" onClick={onBack}>Done</button>}>
+    <ScreenLayout title="Test Motion" eyebrow="Device Diagnostics" compact actions={<button className="button button--ghost" type="button" onClick={onBack}>Done</button>}>
       <section className="panel stack">
         <p className="muted setup-note">Hold the phone sideways as you would during a round. Enable motion, calibrate at neutral, then tilt deliberately down and up.</p>
         <dl className="diagnostic-grid">
@@ -61,7 +61,7 @@ export function MotionDiagnosticScreen({
         {error && <p className="notice notice--warning">{error}</p>}
         <div className="button-row">
           {permission !== "granted" && <button className="button button--primary" type="button" onClick={() => void onEnable()}>Enable Motion</button>}
-          {permission === "granted" && <button className="button button--primary" type="button" disabled={calibrating} onClick={calibrate}>{calibrating ? "Hold steady..." : "Calibrate Neutral"}</button>}
+          {permission === "granted" && <button className="button button--primary" type="button" disabled={calibrating} onClick={calibrate}>{calibrating ? "Hold Steady..." : "Calibrate Neutral"}</button>}
           <button className="button button--secondary" type="button" onClick={onReset}>Reset</button>
         </div>
       </section>

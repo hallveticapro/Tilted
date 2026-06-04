@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from "react";
 
 interface CountdownScreenProps {
   reverseTilt: boolean;
+  showTiltHint: boolean;
   onComplete: () => void;
   onCancel: () => void;
 }
 
-export function CountdownScreen({ reverseTilt, onComplete, onCancel }: CountdownScreenProps) {
+export function CountdownScreen({ reverseTilt, showTiltHint, onComplete, onCancel }: CountdownScreenProps) {
   const [countdown, setCountdown] = useState(3);
   const completedRef = useRef(false);
 
@@ -34,9 +35,11 @@ export function CountdownScreen({ reverseTilt, onComplete, onCancel }: Countdown
       <section className="countdown-card" aria-live="polite">
         <p>Ready?</p>
         <strong>{countdown}</strong>
-        <small>
-          Hold steady. {reverseTilt ? "Down = Pass. Up = Correct." : "Down = Correct. Up = Pass."}
-        </small>
+        {showTiltHint && (
+          <small>
+            Hold Steady. {reverseTilt ? "Down = Pass. Up = Correct." : "Down = Correct. Up = Pass."}
+          </small>
+        )}
       </section>
     </main>
   );

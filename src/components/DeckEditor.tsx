@@ -406,10 +406,10 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
           <p>A malformed custom-deck backup was preserved. Download it before discarding it.</p>
           <div className="button-row">
             <button className="button button--secondary button--small" type="button" onClick={downloadRecovery}>
-              Download recovery backup
+              Download Recovery Backup
             </button>
             <button className="button button--ghost button--small" type="button" onClick={discardRecovery}>
-              Discard backup
+              Discard Backup
             </button>
           </div>
         </section>
@@ -417,13 +417,13 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
       <section className="editor-layout">
         <aside className="editor-sidebar panel">
           <div className="section-heading">
-            <h2>Your decks</h2>
+            <h2>Your Decks</h2>
             <button className="button button--small button--primary" type="button" onClick={addDeck}>
               New
             </button>
           </div>
           <button className="button button--small button--secondary editor-library-export" type="button" onClick={() => downloadText(exportDeckLibrary(workingDecks), "tilted-deck-library.json", "application/json")}>
-            Export library
+            Export Library
           </button>
           {workingDecks.length === 0 && <p className="muted">Create a deck or copy a starter.</p>}
           {workingDecks.map((deck) => (
@@ -441,22 +441,22 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
               <small>{deck.cards.length} cards</small>
             </button>
           ))}
-          <h3>Copy a starter</h3>
+          <h3>Copy a Starter</h3>
           <CategoryScroller
-            ariaLabel="Starter deck categories"
+            ariaLabel="Starter Deck Categories"
             categories={[ALL_CATEGORIES, ...starterCategories]}
             selectedCategory={starterCategory}
             onSelect={setStarterCategory}
             compact
           />
-          <section className="starter-decks" aria-label="Starter decks">
+          <section className="starter-decks" aria-label="Starter Decks">
             <p className="muted starter-decks__count">
               {visibleStarterDecks.length} {visibleStarterDecks.length === 1 ? "deck" : "decks"}
             </p>
             {visibleStarterDecks.map((deck) => (
               <button className="editor-deck-link" key={deck.id} type="button" onClick={() => addCopy(deck)}>
                 {deck.name}
-                <small>Make editable copy</small>
+                <small>Make Editable Copy</small>
               </button>
             ))}
           </section>
@@ -467,21 +467,21 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
             <>
               <section className="panel stack">
                 <label>
-                  <span className="field-label">Deck name</span>
+                  <span className="field-label">Deck Name</span>
                   <input
                     value={selectedDeck.name}
                     onChange={(event) => updateSelectedDeck({ name: event.target.value }, true)}
                   />
                 </label>
                 <label>
-                  <span className="field-label">Optional category</span>
+                  <span className="field-label">Optional Category</span>
                   <input
                     value={selectedDeck.category ?? ""}
                     onChange={(event) => updateSelectedDeck({ category: event.target.value }, true)}
                   />
                 </label>
                 <label>
-                  <span className="field-label">Optional description</span>
+                  <span className="field-label">Optional Description</span>
                   <textarea value={selectedDeck.description ?? ""} onChange={(event) => updateSelectedDeck({ description: event.target.value }, true)} />
                 </label>
                 <div className="button-row">
@@ -492,10 +492,10 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
                     Export CSV
                   </button>
                   <button className="button button--secondary" type="button" onClick={shareDeck}>
-                    Share deck
+                    Share Deck
                   </button>
                   <button className="button button--danger" type="button" onClick={deleteDeck}>
-                    Delete deck
+                    Delete Deck
                   </button>
                 </div>
                 {shareMessage && <p className="muted share-message">{shareMessage}</p>}
@@ -504,14 +504,14 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
                 <div className="section-heading">
                   <h2>Cards</h2>
                   <button className="button button--small button--primary" type="button" onClick={addCard}>
-                    Add card
+                    Add Card
                   </button>
                 </div>
                 {pageCount > 1 && (
                   <div className="button-row card-pagination">
-                    <button className="button button--small button--ghost" type="button" disabled={cardPage === 0} onClick={() => setCardPage((current) => current - 1)}>Previous cards</button>
+                    <button className="button button--small button--ghost" type="button" disabled={cardPage === 0} onClick={() => setCardPage((current) => current - 1)}>Previous Cards</button>
                     <span className="muted">Page {cardPage + 1} of {pageCount}</span>
-                    <button className="button button--small button--ghost" type="button" disabled={cardPage + 1 >= pageCount} onClick={() => setCardPage((current) => current + 1)}>Next cards</button>
+                    <button className="button button--small button--ghost" type="button" disabled={cardPage + 1 >= pageCount} onClick={() => setCardPage((current) => current + 1)}>Next Cards</button>
                   </div>
                 )}
                 {deletedCard && (
@@ -524,10 +524,10 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
                 )}
                 {selectedCardIds.length > 0 && (
                   <div className="panel bulk-card-actions">
-                    <strong>{selectedCardIds.length} selected</strong>
-                    <input aria-label="Bulk card category" placeholder="Assign category" value={bulkCategory} onChange={(event) => setBulkCategory(event.target.value)} />
-                    <button className="button button--small button--secondary" type="button" onClick={bulkAssignCategory}>Assign category</button>
-                    <button className="button button--small button--danger" type="button" onClick={bulkDelete}>Delete selected</button>
+                    <strong>{selectedCardIds.length} Selected</strong>
+                    <input aria-label="Bulk Card Category" placeholder="Assign Category" value={bulkCategory} onChange={(event) => setBulkCategory(event.target.value)} />
+                    <button className="button button--small button--secondary" type="button" onClick={bulkAssignCategory}>Assign Category</button>
+                    <button className="button button--small button--danger" type="button" onClick={bulkDelete}>Delete Selected</button>
                   </div>
                 )}
                 {visibleCards.map((card) => (
@@ -545,7 +545,7 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
                       }, true)} />
                     </label>
                     <label>
-                      <span className="field-label">Optional hint</span>
+                      <span className="field-label">Optional Hint</span>
                       <input value={card.answer ?? ""} onChange={(event) => updateSelectedDeck({
                         cards: selectedDeck.cards.map((candidate) =>
                           candidate.id === card.id ? { ...candidate, answer: event.target.value } : candidate,
@@ -570,7 +570,7 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
                           })
                         }
                       >
-                        <option value="">Not set</option>
+                        <option value="">Not Set</option>
                         <option value="easy">Easy</option>
                         <option value="medium">Medium</option>
                         <option value="hard">Hard</option>
@@ -580,25 +580,25 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
                       Delete
                     </button>
                     <div className="card-editor__move">
-                      <button className="button button--small button--ghost" type="button" aria-label={`Move ${card.prompt} up`} onClick={() => moveCard(card.id, -1)}>↑</button>
-                      <button className="button button--small button--ghost" type="button" aria-label={`Move ${card.prompt} down`} onClick={() => moveCard(card.id, 1)}>↓</button>
+                      <button className="button button--small button--ghost" type="button" aria-label={`Move ${card.prompt} Up`} onClick={() => moveCard(card.id, -1)}>↑</button>
+                      <button className="button button--small button--ghost" type="button" aria-label={`Move ${card.prompt} Down`} onClick={() => moveCard(card.id, 1)}>↓</button>
                     </div>
                   </article>
                 ))}
               </section>
               <section className="panel import-panel">
-                <h2>Paste cards</h2>
+                <h2>Paste Cards</h2>
                 <p className="muted">Add one prompt per line.</p>
                 <textarea value={lineImport} onChange={(event) => setLineImport(event.target.value)} />
                 <button className="button button--secondary" type="button" onClick={importLines}>
-                  Add pasted cards
+                  Add Pasted Cards
                 </button>
               </section>
               <section className="panel import-panel">
-                <h2>Paste card CSV</h2>
+                <h2>Paste Card CSV</h2>
                 <p className="muted">Use prompt, hint, category, and difficulty columns.</p>
                 <textarea value={csvImport} onChange={(event) => setCsvImport(event.target.value)} />
-                <button className="button button--secondary" type="button" onClick={importCsv}>Add CSV cards</button>
+                <button className="button button--secondary" type="button" onClick={importCsv}>Add CSV Cards</button>
               </section>
             </>
           ) : (
@@ -607,17 +607,17 @@ export function DeckEditor({ customDecks, onDecksChange, onBack }: DeckEditorPro
             </section>
           )}
           <section className="panel import-panel">
-            <h2>Import deck JSON</h2>
+            <h2>Import Deck JSON</h2>
             <textarea value={jsonImport} onChange={(event) => setJsonImport(event.target.value)} />
             <button className="button button--secondary" type="button" onClick={importJson}>
               Import JSON
             </button>
           </section>
           <section className="panel import-panel">
-            <h2>Restore deck library</h2>
+            <h2>Restore Deck Library</h2>
             <p className="muted">Import a whole-library JSON backup alongside your existing decks.</p>
             <textarea value={libraryImport} onChange={(event) => setLibraryImport(event.target.value)} />
-            <button className="button button--secondary" type="button" onClick={importLibrary}>Import library backup</button>
+            <button className="button button--secondary" type="button" onClick={importLibrary}>Import Library Backup</button>
           </section>
         </section>
       </section>

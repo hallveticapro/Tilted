@@ -274,7 +274,7 @@ export function GameScreen({
             type="button"
             aria-controls="optional-card-actions"
             aria-expanded={showControls}
-            aria-label={showControls ? "Hide controls" : "Show controls"}
+            aria-label={showControls ? "Hide Controls" : "Show Controls"}
             onClick={() => setShowControls((current) => !current)}
           >
             <span className="game-menu-button__icon" aria-hidden="true">
@@ -290,7 +290,7 @@ export function GameScreen({
       <section className="game-card" aria-live="polite">
         {isPaused ? (
           <div className="game-card__paused">
-            <p>Round paused</p>
+            <p>Round Paused</p>
             <div className="game-card__paused-actions">
               <button className="button button--primary" type="button" onClick={togglePause}>
                 Resume
@@ -316,7 +316,7 @@ export function GameScreen({
                     type="button"
                     onClick={() => setShowAnswer(true)}
                   >
-                    Reveal hint
+                    Reveal Hint
                   </button>
                 )}
               </div>
@@ -326,7 +326,7 @@ export function GameScreen({
       </section>
 
       {showActionPanel && (
-        <section id="optional-card-actions" className="game-actions" aria-label="Card actions">
+        <section id="optional-card-actions" className="game-actions" aria-label="Card Actions">
           <button
             className="game-action game-action--pass"
             type="button"

@@ -10,9 +10,9 @@ describe("DeckEditor", () => {
     );
 
     const categoryNav = screen.getByRole("navigation", {
-      name: "Starter deck categories",
+      name: "Starter Deck Categories",
     });
-    const starterDecks = screen.getByRole("region", { name: "Starter decks" });
+    const starterDecks = screen.getByRole("region", { name: "Starter Decks" });
 
     expect(within(starterDecks).getByRole("button", { name: /4th Grade Math Review/ })).toBeVisible();
     expect(within(starterDecks).queryByRole("button", { name: /Common Animals/ })).not.toBeInTheDocument();

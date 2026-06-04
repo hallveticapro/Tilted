@@ -150,23 +150,23 @@ export function DeckSelectScreen({
       }
     >
       <CategoryScroller
-        ariaLabel="Deck categories"
+        ariaLabel="Deck Categories"
         categories={[ALL_CATEGORIES, ...categories]}
         selectedCategory={selectedCategory}
         onSelect={setSelectedCategory}
       />
-      <section className="deck-toolbar" aria-label="Deck tools">
+      <section className="deck-toolbar" aria-label="Deck Tools">
         <div className="deck-toolbar__main">
           <div className={`deck-search-control ${searchOpen ? "is-open" : ""}`}>
             {searchOpen ? (
               <div className="deck-search-control__field">
                 <SearchIcon />
                 <input
-                  aria-label="Search decks"
+                  aria-label="Search Decks"
                   className="deck-search-control__input"
                   ref={searchInputRef}
                   type="search"
-                  placeholder="Search decks"
+                  placeholder="Search Decks"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   onKeyDown={(event) => {
@@ -178,7 +178,7 @@ export function DeckSelectScreen({
                 <button
                   className="deck-search-control__close"
                   type="button"
-                  aria-label="Close deck search"
+                  aria-label="Close Deck Search"
                   onClick={closeSearch}
                 >
                   ×
@@ -188,7 +188,7 @@ export function DeckSelectScreen({
               <button
                 className="deck-search-control__button"
                 type="button"
-                aria-label="Search decks"
+                aria-label="Search Decks"
                 aria-expanded="false"
                 onClick={() => setSearchOpen(true)}
               >
@@ -226,23 +226,23 @@ export function DeckSelectScreen({
       <div className="section-heading">
         <h2>
           {searchIsActive
-            ? "Search results"
+            ? "Search Results"
             : selectedCategory === ALL_CATEGORIES
-              ? "All built-in decks"
+              ? "All Built-In Decks"
               : selectedCategory}
         </h2>
       </div>
-      <section className="deck-grid" aria-label="Built-in decks">
+      <section className="deck-grid" aria-label="Built-In Decks">
         {visibleBuiltInDecks.map(renderDeckCard)}
       </section>
       <div className="section-heading">
-        <h2>Your decks</h2>
+        <h2>Your Decks</h2>
         <button className="button button--small button--secondary" type="button" onClick={onEditDecks}>
-          Manage decks
+          Manage Decks
         </button>
       </div>
       {visibleCustomDecks.length > 0 ? (
-        <section className="deck-grid" aria-label="Custom decks">
+        <section className="deck-grid" aria-label="Custom Decks">
           {visibleCustomDecks.map(renderDeckCard)}
         </section>
       ) : (
