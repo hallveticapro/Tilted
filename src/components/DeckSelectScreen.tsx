@@ -81,6 +81,8 @@ export function DeckSelectScreen({
   const [selectedCategory, setSelectedCategory] = useState(() => categories[0] ?? ALL_CATEGORIES);
   const [query, setQuery] = useState("");
   const [library, setLibrary] = useState<"all" | "built-in" | "custom">("all");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [mixedInfoOpen, setMixedInfoOpen] = useState(false);
   const categoryBuiltInDecks =
     selectedCategory === ALL_CATEGORIES
       ? builtInDecks
@@ -95,12 +97,19 @@ export function DeckSelectScreen({
     (deck) => (!classroomOnly || deck.classroomSafe) && matchesSearch(deck),
   );
   const visibleCustomDecks = customDecks.filter(matchesSearch);
+  const surpriseCandidates = [
+    ...(library === "custom" ? [] : visibleBuiltInDecks),
+    ...(library === "built-in" ? [] : visibleCustomDecks),
+  ];
+  const hasActiveDiscoveryFilters = Boolean(normalizedQuery) || library !== "all" || classroomOnly;
+  const mixedCategoryLabel = selectedCategory === ALL_CATEGORIES ? "all categories" : selectedCategory;
+  const clearDiscoveryFilters = () => {
+    setQuery("");
+    setLibrary("all");
+    onClassroomOnlyChange(false);
+  };
   const chooseSurprise = () => {
-    const candidates = [
-      ...(library === "custom" ? [] : visibleBuiltInDecks),
-      ...(library === "built-in" ? [] : visibleCustomDecks),
-    ];
-    const deck = candidates[Math.floor(Math.random() * candidates.length)];
+    const deck = surpriseCandidates[Math.floor(Math.random() * surpriseCandidates.length)];
     if (deck) {
       onSelect(deck.id);
     }
@@ -132,27 +141,79 @@ export function DeckSelectScreen({
         selectedCategory={selectedCategory}
         onSelect={setSelectedCategory}
       />
-      <section className="panel deck-discovery">
-        <label>
-          <span className="field-label">Find a deck</span>
-          <input type="search" placeholder="Search decks" value={query} onChange={(event) => setQuery(event.target.value)} />
-        </label>
-        <div className="segmented-control segmented-control--three" role="group" aria-label="Deck library">
-          {(["all", "built-in", "custom"] as const).map((option) => (
-            <button className={library === option ? "is-selected" : ""} key={option} type="button" onClick={() => setLibrary(option)}>{option}</button>
-          ))}
-        </div>
-        <label className="toggle-row toggle-row--compact">
-          <span><strong>Classroom-safe decks only</strong></span>
-          <input aria-label="Show classroom-safe decks only" type="checkbox" checked={classroomOnly} onChange={(event) => onClassroomOnlyChange(event.target.checked)} />
-        </label>
-        <div className="button-row">
-          <button className="button button--secondary button--small" type="button" onClick={chooseSurprise}>Surprise Me</button>
-          {visibleBuiltInDecks.length > 1 && (
-            <button className="button button--secondary button--small" type="button" onClick={() => onSelectMixed(visibleBuiltInDecks, selectedCategory)}>Play Mixed Category</button>
+      <section className="deck-toolbar" aria-label="Deck tools">
+        <div className="deck-toolbar__actions">
+          <button
+            className={`button button--ghost button--small deck-search-toggle ${hasActiveDiscoveryFilters ? "is-active" : ""}`}
+            type="button"
+            aria-label={searchOpen ? "Hide deck search and filters" : "Show deck search and filters"}
+            aria-expanded={searchOpen}
+            aria-controls="deck-search-filters"
+            onClick={() => setSearchOpen((current) => !current)}
+          >
+            <span className="deck-search-toggle__icon" aria-hidden="true" />
+            <span>Search</span>
+            {hasActiveDiscoveryFilters && <small>Filters on</small>}
+          </button>
+          <button
+            className="button button--secondary button--small"
+            type="button"
+            disabled={surpriseCandidates.length === 0}
+            onClick={chooseSurprise}
+          >
+            Surprise Me
+          </button>
+          {library !== "custom" && visibleBuiltInDecks.length > 1 && (
+            <div className="mixed-play-control">
+              <button
+                className="button button--secondary button--small"
+                type="button"
+                onClick={() => onSelectMixed(visibleBuiltInDecks, selectedCategory)}
+              >
+                Play Mixed Category
+              </button>
+              <button
+                className="mixed-info-button"
+                type="button"
+                aria-label="Explain Play Mixed Category"
+                aria-expanded={mixedInfoOpen}
+                aria-controls="mixed-category-help"
+                onClick={() => setMixedInfoOpen((current) => !current)}
+              >
+                ?
+              </button>
+            </div>
           )}
         </div>
+        {mixedInfoOpen && (
+          <p className="deck-mixed-help" id="mixed-category-help">
+            Mixed category shuffles cards from every visible built-in deck in {mixedCategoryLabel}.
+            Use it when you want one bigger grab bag instead of choosing a single deck.
+          </p>
+        )}
       </section>
+      {searchOpen && (
+        <section className="panel deck-discovery" id="deck-search-filters" aria-label="Deck search and filters">
+          <label>
+            <span className="field-label">Find a deck</span>
+            <input type="search" placeholder="Search decks" value={query} onChange={(event) => setQuery(event.target.value)} />
+          </label>
+          <div className="segmented-control segmented-control--three" role="group" aria-label="Deck library">
+            {(["all", "built-in", "custom"] as const).map((option) => (
+              <button className={library === option ? "is-selected" : ""} key={option} type="button" onClick={() => setLibrary(option)}>{option}</button>
+            ))}
+          </div>
+          <label className="toggle-row toggle-row--compact">
+            <span><strong>Classroom-safe decks only</strong></span>
+            <input aria-label="Show classroom-safe decks only" type="checkbox" checked={classroomOnly} onChange={(event) => onClassroomOnlyChange(event.target.checked)} />
+          </label>
+          {hasActiveDiscoveryFilters && (
+            <button className="button button--ghost button--small" type="button" onClick={clearDiscoveryFilters}>
+              Clear search and filters
+            </button>
+          )}
+        </section>
+      )}
       {(library === "all" || library === "built-in") && <div className="section-heading">
         <h2>{selectedCategory === ALL_CATEGORIES ? "All built-in decks" : selectedCategory}</h2>
       </div>

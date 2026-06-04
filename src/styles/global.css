@@ -528,6 +528,95 @@ kbd {
   background: #fff6d8;
 }
 
+.deck-toolbar {
+  display: grid;
+  gap: 0.65rem;
+  margin: -0.15rem 0 1rem;
+}
+
+.deck-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.deck-search-toggle {
+  gap: 0.55rem;
+}
+
+.deck-search-toggle.is-active {
+  border-color: #8bc9c3;
+  background: #e1f5ef;
+}
+
+.deck-search-toggle small {
+  border-left: 2px solid rgb(23 50 77 / 16%);
+  padding-left: 0.45rem;
+  color: #5a6d75;
+  font-size: 0.72rem;
+}
+
+.deck-search-toggle__icon {
+  position: relative;
+  display: inline-block;
+  width: 0.92rem;
+  height: 0.92rem;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.deck-search-toggle__icon::after {
+  position: absolute;
+  right: -0.42rem;
+  bottom: -0.23rem;
+  width: 0.5rem;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  content: "";
+  transform: rotate(45deg);
+  transform-origin: center;
+}
+
+.mixed-play-control {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.mixed-info-button {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  border: 2px solid #8bc9c3;
+  border-radius: 999px;
+  color: #17324d;
+  background: #e1f5ef;
+  box-shadow: 0 3px 0 #a7d7d1;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.mixed-info-button[aria-expanded="true"] {
+  border-color: #00778d;
+  color: white;
+  background: #00778d;
+}
+
+.deck-mixed-help {
+  max-width: 42rem;
+  border: 2px dashed #b9d6d1;
+  border-radius: 0.9rem;
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+  color: #405761;
+  background: rgb(255 255 255 / 62%);
+  line-height: 1.35;
+}
+
 .deck-discovery {
   display: grid;
   gap: 0.75rem;
