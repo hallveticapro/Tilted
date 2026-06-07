@@ -1,8 +1,44 @@
-import type { RoundResult } from "../types";
+import type { Card, RoundCardResult, RoundResult } from "../types";
 import { getBrowserStorage, readStoredValue, removeStoredValue, writeStoredValue } from "./safeStorage";
 
 export const ROUND_HISTORY_KEY = "tilted.roundHistory.v1";
 const MAX_HISTORY_ITEMS = 100;
+
+function isStoredCard(value: unknown): value is Card {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const card = value as Partial<Card>;
+  return (
+    typeof card.id === "string" &&
+    typeof card.prompt === "string" &&
+    (card.answer === undefined || typeof card.answer === "string") &&
+    (card.category === undefined || typeof card.category === "string") &&
+    (card.difficulty === undefined ||
+      card.difficulty === "easy" ||
+      card.difficulty === "medium" ||
+      card.difficulty === "hard")
+  );
+}
+
+function sanitizeCards(values: unknown[]): Card[] {
+  return values.filter(isStoredCard);
+}
+
+function isStoredOutcome(value: unknown): value is RoundCardResult {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const result = value as Partial<RoundCardResult>;
+  return (
+    (result.outcome === "correct" || result.outcome === "pass") &&
+    isStoredCard(result.card)
+  );
+}
+
+function sanitizeOutcomes(values: unknown[]): RoundCardResult[] {
+  return values.filter(isStoredOutcome);
+}
 
 function isRoundResult(value: unknown): value is RoundResult {
   if (!value || typeof value !== "object") {
@@ -47,7 +83,12 @@ export function loadRoundHistory(storage?: Storage): RoundResult[] {
 
 export function sanitizeRoundForHistory(result: RoundResult): RoundResult {
   const { teamId: _teamId, teamName: _teamName, playerName: _playerName, ...anonymousResult } = result;
-  return anonymousResult;
+  return {
+    ...anonymousResult,
+    outcomes: sanitizeOutcomes(result.outcomes),
+    correctCards: sanitizeCards(result.correctCards),
+    passedCards: sanitizeCards(result.passedCards),
+  };
 }
 
 export function saveRoundHistory(history: RoundResult[], storage?: Storage): RoundResult[] {

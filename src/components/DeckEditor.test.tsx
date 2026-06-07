@@ -50,4 +50,94 @@ describe("DeckEditor", () => {
     expect(screen.queryByRole("button", { name: "Undo" })).not.toBeInTheDocument();
     expect(screen.queryByDisplayValue("Alpha")).not.toBeInTheDocument();
   });
+
+  it("restores one deleted card with Undo", () => {
+    const deck: Deck = {
+      id: "deck-a",
+      name: "Deck A",
+      cards: [
+        { id: "a1", prompt: "Alpha" },
+        { id: "a2", prompt: "Bravo" },
+      ],
+    };
+    render(<DeckEditor customDecks={[deck]} onDecksChange={vi.fn()} onBack={vi.fn()} />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Delete" })[0]);
+
+    expect(screen.getByText('Deleted "Alpha".')).toBeVisible();
+    expect(screen.queryByDisplayValue("Alpha")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+
+    expect(screen.getByDisplayValue("Alpha")).toBeVisible();
+    expect(screen.getByDisplayValue("Bravo")).toBeVisible();
+  });
+
+  it("restores bulk-deleted cards in their original order", () => {
+    const deck: Deck = {
+      id: "deck-a",
+      name: "Deck A",
+      cards: [
+        { id: "a1", prompt: "Alpha" },
+        { id: "a2", prompt: "Bravo" },
+        { id: "a3", prompt: "Charlie" },
+      ],
+    };
+    render(<DeckEditor customDecks={[deck]} onDecksChange={vi.fn()} onBack={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select Alpha" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select Charlie" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete Selected" }));
+
+    expect(screen.getByText("Deleted 2 cards.")).toBeVisible();
+    expect(screen.queryByDisplayValue("Alpha")).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue("Bravo")).toBeVisible();
+    expect(screen.queryByDisplayValue("Charlie")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+
+    const promptInputs = screen
+      .getAllByDisplayValue(/Alpha|Bravo|Charlie/)
+      .map((input) => (input as HTMLInputElement).value);
+    expect(promptInputs).toEqual(["Alpha", "Bravo", "Charlie"]);
+  });
+
+  it("keeps at least one card when bulk delete selects every card", () => {
+    const deck: Deck = {
+      id: "deck-a",
+      name: "Deck A",
+      cards: [
+        { id: "a1", prompt: "Alpha" },
+        { id: "a2", prompt: "Bravo" },
+      ],
+    };
+    render(<DeckEditor customDecks={[deck]} onDecksChange={vi.fn()} onBack={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select Alpha" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select Bravo" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete Selected" }));
+
+    expect(screen.getByText("Keep at least one card in the deck.")).toBeVisible();
+    expect(screen.getByDisplayValue("Alpha")).toBeVisible();
+    expect(screen.getByDisplayValue("Bravo")).toBeVisible();
+  });
+
+  it("keeps a deck intact when deck deletion is canceled", () => {
+    const onDecksChange = vi.fn();
+    const deck: Deck = {
+      id: "deck-a",
+      name: "Deck A",
+      cards: [{ id: "a1", prompt: "Alpha" }],
+    };
+    render(<DeckEditor customDecks={[deck]} onDecksChange={onDecksChange} onBack={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete Deck" }));
+    expect(screen.getByRole("alertdialog", { name: 'Delete "Deck A"?' })).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("alertdialog", { name: 'Delete "Deck A"?' })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Deck A/ })).toBeVisible();
+    expect(onDecksChange).not.toHaveBeenCalled();
+  });
 });

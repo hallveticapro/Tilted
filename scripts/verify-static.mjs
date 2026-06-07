@@ -14,6 +14,24 @@ const assertMatches = (content, pattern, source) => {
     throw new Error(`${source} does not match ${pattern}`);
   }
 };
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const securityHeaders = JSON.parse(read("config/security-headers.json"));
+
+function assertHeaderValues(source, content, strategy) {
+  for (const [header, value] of Object.entries(securityHeaders)) {
+    if (strategy === "nginx") {
+      assertMatches(
+        content,
+        new RegExp(`add_header\\s+${escapeRegExp(header)}\\s+"${escapeRegExp(value)}"\\s+always;`),
+        source,
+      );
+    } else if (strategy === "headers") {
+      assertIncludes(content, `${header}: ${value}`, source);
+    } else if (strategy === "vercel") {
+      assertIncludes(content, `"key": "${header}", "value": "${value}"`, source);
+    }
+  }
+}
 
 const index = read("dist/index.html");
 const serviceWorker = read("dist/sw.js");
@@ -21,21 +39,9 @@ const nginx = read("deploy/nginx.conf");
 const staticHeaders = read("dist/_headers");
 const vercel = read("vercel.json");
 
-for (const [source, content] of [
-  ["deploy/nginx.conf", nginx],
-  ["dist/_headers", staticHeaders],
-  ["vercel.json", vercel],
-]) {
-  for (const header of [
-    "Content-Security-Policy",
-    "Permissions-Policy",
-    "Referrer-Policy",
-    "X-Content-Type-Options",
-    "X-Frame-Options",
-  ]) {
-    assertIncludes(content, header, source);
-  }
-}
+assertHeaderValues("deploy/nginx.conf", nginx, "nginx");
+assertHeaderValues("dist/_headers", staticHeaders, "headers");
+assertHeaderValues("vercel.json", vercel, "vercel");
 
 assertIncludes(nginx, "location = /healthz", "deploy/nginx.conf");
 assertMatches(serviceWorker, /const CACHE_NAME = "tilted-shell-[a-f0-9]{12}"/, "dist/sw.js");
@@ -45,6 +51,11 @@ assertIncludes(index, 'property="og:image"', "dist/index.html");
 assertIncludes(index, 'name="twitter:card"', "dist/index.html");
 assertIncludes(index, 'property="og:url" content="https://', "dist/index.html");
 assertIncludes(staticHeaders, "Cache-Control: no-cache, must-revalidate", "dist/_headers");
+assertMatches(
+  nginx,
+  /location = \/sw\.js \{[\s\S]*add_header\s+Cache-Control\s+"no-cache, must-revalidate"\s+always;[\s\S]*\}/,
+  "deploy/nginx.conf",
+);
 assertIncludes(vercel, '"Cache-Control", "value": "no-cache, must-revalidate"', "vercel.json");
 
 if (index.includes("__TILTED_")) {

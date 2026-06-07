@@ -15,6 +15,11 @@ export function TeamSetupScreen({ onStart, onBack }: TeamSetupScreenProps) {
   ]);
   const [totalRounds, setTotalRounds] = useState(6);
   const [targetScore, setTargetScore] = useState<number | null>(null);
+  const trimmedNames = teams.map(({ name }) => name.trim());
+  const nonBlankNames = trimmedNames.filter(Boolean);
+  const uniqueNameCount = new Set(nonBlankNames.map((name) => name.toLocaleLowerCase())).size;
+  const hasDuplicateNames = nonBlankNames.length !== uniqueNameCount;
+  const canChooseDeck = nonBlankNames.length >= 2 && !hasDuplicateNames;
 
   const updateTeam = (index: number, field: "name" | "players", value: string) =>
     setTeams((current) =>
@@ -68,6 +73,11 @@ export function TeamSetupScreen({ onStart, onBack }: TeamSetupScreenProps) {
               )}
             </div>
           ))}
+          {hasDuplicateNames && (
+            <p className="notice notice--warning">
+              Team names must be unique so scores and turns stay separate.
+            </p>
+          )}
         </div>
         <label>
           <span className="field-label">Total rounds</span>
@@ -90,7 +100,7 @@ export function TeamSetupScreen({ onStart, onBack }: TeamSetupScreenProps) {
         <button
           className="button button--primary button--large"
           type="button"
-          disabled={teams.filter(({ name }) => name.trim()).length < 2}
+          disabled={!canChooseDeck}
           onClick={() =>
             onStart(
               createTeamSession(

@@ -106,7 +106,23 @@ To preview the production build:
 
 ```bash
 npm run build
-npm exec vite preview
+npm run preview
+```
+
+For local verification:
+
+```bash
+npm run lint
+npm run typecheck
+npm test -- --run
+```
+
+Browser smoke tests use Playwright. Install the Chromium browser once on a new machine, then
+run the suite:
+
+```bash
+npx playwright install chromium
+npm run test:e2e
 ```
 
 ## Controls
@@ -164,8 +180,10 @@ that session but are not preserved in the browser's saved history.
 ## Deck Discovery and Round Filters
 
 Use deck search, favorites, recently played labels, **Surprise Me**, or **Play Mixed Category**
-to move quickly through the built-in library. The classroom-safe toggle hides entertainment
-categories when a review session needs a narrower list.
+to move quickly through the built-in library. The **Classroom-safe decks only** toggle hides
+built-in decks marked as not classroom-safe from deck cards, Surprise Me, and mixed-category
+play while keeping local custom decks visible. Deck cards can show compact subject, age-range,
+and classroom-safe metadata labels, and deck search includes subject, age range, and tags.
 
 Round setup can filter cards by difficulty and subcategory, cycle back through a reshuffled
 deck when a fast team reaches the end, or stop after an optional pass limit. **Teacher review**
@@ -326,6 +344,11 @@ container's policy with one that blocks service workers or device-orientation AP
 Also verify that the proxy or CDN does not cache `/sw.js`; it should be served with
 `Cache-Control: no-cache, must-revalidate` or an equivalent prompt-revalidation policy so
 installed browsers discover app updates quickly.
+
+For Cloudflare-backed deployments, add a cache rule for the hostname and URI path `/sw.js`
+that bypasses cache or sets Edge TTL to 0 while respecting the origin response. Re-run
+`npm run audit:production` after the rule is published; the check should no longer report
+`Cache-Control: max-age=14400`.
 
 After the HTTPS public hostname is stable and verified, configure HSTS at the TLS-terminating
 reverse proxy:

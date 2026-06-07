@@ -37,10 +37,13 @@ Verified on 2026-06-04:
 
 ```bash
 npm ci
+npm run lint
 npm run typecheck
 npm test -- --run
 npm run build
 npm run verify:static
+npx playwright install chromium
+npm run test:e2e
 npm audit --omit=dev --audit-level=moderate
 npm audit
 npm outdated

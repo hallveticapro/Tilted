@@ -1,6 +1,8 @@
+import { useState } from "react";
 import type { RoundResult } from "../types";
 import { downloadText } from "../services/download";
 import { exportHistoryCsv } from "../services/roundHistory";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { ScreenLayout } from "./ScreenLayout";
 
 interface HistoryScreenProps {
@@ -10,11 +12,13 @@ interface HistoryScreenProps {
 }
 
 export function HistoryScreen({ history, onClear, onBack }: HistoryScreenProps) {
+  const [confirmClear, setConfirmClear] = useState(false);
+
   return (
     <ScreenLayout title="Round History" eyebrow="Recent games" actions={<button className="button button--ghost" type="button" onClick={onBack}>Home</button>}>
       <div className="button-row history-actions">
         <button className="button button--secondary" type="button" disabled={history.length === 0} onClick={() => downloadText(exportHistoryCsv(history), "tilted-round-history.csv", "text/csv")}>Export anonymous CSV</button>
-        <button className="button button--danger" type="button" disabled={history.length === 0} onClick={() => window.confirm("Clear all round history?") && onClear()}>Clear history</button>
+        <button className="button button--danger" type="button" disabled={history.length === 0} onClick={() => setConfirmClear(true)}>Clear history</button>
       </div>
       {history.length === 0 ? <p className="empty-state">No rounds played yet.</p> : (
         <section className="history-list" aria-label="Round history">
@@ -25,6 +29,19 @@ export function HistoryScreen({ history, onClear, onBack }: HistoryScreenProps) 
             </article>
           ))}
         </section>
+      )}
+      {confirmClear && (
+        <ConfirmDialog
+          title="Clear all round history?"
+          description="This removes saved round history from this browser."
+          confirmLabel="Clear History"
+          destructive
+          onConfirm={() => {
+            setConfirmClear(false);
+            onClear();
+          }}
+          onCancel={() => setConfirmClear(false)}
+        />
       )}
     </ScreenLayout>
   );

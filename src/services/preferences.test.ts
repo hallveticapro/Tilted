@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   loadReverseTilt,
+  loadClassroomOnly,
   loadSoundEffects,
   loadVibration,
+  CLASSROOM_ONLY_KEY,
   REVERSE_TILT_KEY,
   saveReverseTilt,
+  saveClassroomOnly,
   saveSoundEffects,
   saveVibration,
 } from "./preferences";
@@ -34,5 +37,14 @@ describe("preferences", () => {
 
     expect(loadSoundEffects()).toBe(false);
     expect(loadVibration()).toBe(false);
+  });
+
+  it("defaults classroom-safe filtering off and persists changes", () => {
+    expect(loadClassroomOnly()).toBe(false);
+
+    saveClassroomOnly(true);
+
+    expect(loadClassroomOnly()).toBe(true);
+    expect(localStorage.getItem(CLASSROOM_ONLY_KEY)).toBe("true");
   });
 });

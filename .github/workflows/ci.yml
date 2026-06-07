@@ -29,6 +29,9 @@ jobs:
       - name: Check types
         run: npm run typecheck
 
+      - name: Run lint
+        run: npm run lint
+
       - name: Run tests
         run: npm test -- --run
 
@@ -37,3 +40,9 @@ jobs:
 
       - name: Verify generated static bundle
         run: npm run verify:static
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser smoke tests
+        run: npm run test:e2e

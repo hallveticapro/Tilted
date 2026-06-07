@@ -1,38 +1,33 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { CountdownScreen } from "./components/CountdownScreen";
-import { DeckEditor } from "./components/DeckEditor";
-import { DeckSelectScreen } from "./components/DeckSelectScreen";
-import { EndRoundScreen } from "./components/EndRoundScreen";
-import { ForeheadSetupScreen } from "./components/ForeheadSetupScreen";
-import { GameScreen } from "./components/GameScreen";
-import { HistoryScreen } from "./components/HistoryScreen";
-import { HomeScreen } from "./components/HomeScreen";
-import { HowToPlayScreen } from "./components/HowToPlayScreen";
-import { LandscapeGateScreen } from "./components/LandscapeGateScreen";
-import { MotionDiagnosticScreen } from "./components/MotionDiagnosticScreen";
+import { useCallback, useEffect, useMemo, useReducer, useState, type ReactNode } from "react";
+import { AppScreens } from "./components/AppScreens";
 import { PwaBanner } from "./components/PwaBanner";
-import { RoundSetupScreen } from "./components/RoundSetupScreen";
-import { TeamResultsScreen } from "./components/TeamResultsScreen";
-import { TeamSetupScreen } from "./components/TeamSetupScreen";
-import { TeamTurnScreen } from "./components/TeamTurnScreen";
+import { SharedDeckNotice } from "./components/SharedDeckNotice";
 import { builtInDecks } from "./data/builtInDecks";
 import { useLandscapeOrientation } from "./hooks/useLandscapeOrientation";
 import { useMotionControls } from "./hooks/useMotionControls";
 import { useRoundDisplay } from "./hooks/useRoundDisplay";
 import { usePwaStatus } from "./hooks/usePwaStatus";
 import { primeAudio } from "./services/audio";
+import {
+  appFlowReducer,
+  initialAppFlowState,
+  type RoundStartDestination,
+  type Screen,
+} from "./services/appFlow";
 import { loadCustomDecks, saveCustomDecks } from "./services/deckStorage";
 import { readSharedDeckFromLocation } from "./services/deckSharing";
-import { addRoundToHistory, clearRoundHistory, getBestScore, loadRoundHistory } from "./services/roundHistory";
-import { addTeamRound, getActivePlayer, getActiveTeam, isTeamSessionComplete } from "./services/teamSession";
+import { addRoundToHistory, clearRoundHistory, loadRoundHistory } from "./services/roundHistory";
+import { addTeamRound, isTeamSessionComplete } from "./services/teamSession";
 import { canUseBrowserStorage } from "./services/safeStorage";
 import {
   loadReverseTilt,
+  loadClassroomOnly,
   loadFavoriteDecks,
   loadSensitivity,
   loadSoundEffects,
   loadVibration,
   saveReverseTilt,
+  saveClassroomOnly,
   saveFavoriteDecks,
   saveSensitivity,
   saveSoundEffects,
@@ -40,31 +35,15 @@ import {
 } from "./services/preferences";
 import type { Deck, GameMode, RoundResult, RoundSettings, TeamSession } from "./types";
 
-type Screen =
-  | "home"
-  | "decks"
-  | "setup"
-  | "landscape-gate"
-  | "forehead-setup"
-  | "countdown"
-  | "game"
-  | "results"
-  | "editor"
-  | "how-to-play"
-  | "history"
-  | "team-setup"
-  | "team-turn"
-  | "team-results"
-  | "motion-test";
-
 const DEFAULT_THRESHOLD = 40;
-type RoundStartDestination = "forehead-setup" | "countdown";
 
 function App() {
-  const [screen, setScreen] = useState<Screen>("home");
+  const [flow, dispatchFlow] = useReducer(appFlowReducer, initialAppFlowState);
+  const { screen, pendingStart } = flow;
   const [customDecks, setCustomDecks] = useState<Deck[]>(() => loadCustomDecks());
   const [virtualDeck, setVirtualDeck] = useState<Deck | null>(null);
   const [favoriteDeckIds, setFavoriteDeckIds] = useState<string[]>(() => loadFavoriteDecks());
+  const [classroomOnly, setClassroomOnly] = useState(() => loadClassroomOnly());
   const [storageAvailable] = useState(() => canUseBrowserStorage());
   const [selectedDeckId, setSelectedDeckId] = useState(builtInDecks[0].id);
   const [roundResult, setRoundResult] = useState<RoundResult | null>(null);
@@ -72,10 +51,7 @@ function App() {
   const [gameMode, setGameMode] = useState<GameMode>("quick");
   const [teamSession, setTeamSession] = useState<TeamSession | null>(null);
   const [gameNotice, setGameNotice] = useState<string | null>(null);
-  const [pendingStart, setPendingStart] = useState<{
-    destination: RoundStartDestination;
-    cancelScreen: Screen;
-  } | null>(null);
+  const [sharedDeckImport, setSharedDeckImport] = useState(() => readSharedDeckFromLocation());
   const [settings, setSettings] = useState<RoundSettings>(() => ({
     deckId: builtInDecks[0].id,
     durationSeconds: 60,
@@ -108,25 +84,58 @@ function App() {
   });
   const roundDisplay = useRoundDisplay();
   const pwa = usePwaStatus();
-
-  useEffect(() => {
-    const sharedDeck = readSharedDeckFromLocation();
-    if (!sharedDeck || !window.confirm(`Import the shared deck "${sharedDeck.name}"?`)) {
+  const pwaBanner = (
+    <PwaBanner
+      online={pwa.online}
+      canInstall={pwa.canInstall}
+      updateReady={pwa.updateReady}
+      showIosInstallHint={pwa.showIosInstallHint}
+      onInstall={() => void pwa.install()}
+      onUpdate={pwa.update}
+      onDismissIosInstallHint={pwa.dismissIosInstallHint}
+      storageAvailable={storageAvailable}
+    />
+  );
+  const clearSharedDeckHash = () => {
+    window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+  };
+  const goToScreen = (nextScreen: Screen) => {
+    dispatchFlow({ type: "go", screen: nextScreen });
+  };
+  const dismissSharedDeckImport = () => {
+    clearSharedDeckHash();
+    setSharedDeckImport({ status: "none" });
+  };
+  const importSharedDeck = () => {
+    if (sharedDeckImport.status !== "ok") {
       return;
     }
     try {
-      const saved = saveCustomDecks([...customDecks, sharedDeck]);
+      const saved = saveCustomDecks([...customDecks, sharedDeckImport.deck]);
       setCustomDecks(saved);
-      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
-      setScreen("editor");
+      clearSharedDeckHash();
+      setSharedDeckImport({ status: "none" });
+      goToScreen("editor");
     } catch (error) {
-      window.alert(
-        error instanceof Error
+      setSharedDeckImport({
+        status: "error",
+        message: error instanceof Error
           ? error.message
           : "That shared deck could not be saved in this browser.",
-      );
+      });
     }
-  }, []);
+  };
+  const withPwaBanner = (content: ReactNode, showBanner = true) => (
+    <>
+      {content}
+      <SharedDeckNotice
+        importResult={sharedDeckImport}
+        onImport={importSharedDeck}
+        onDismiss={dismissSharedDeckImport}
+      />
+      {showBanner ? pwaBanner : null}
+    </>
+  );
 
   const updateSettings = (nextSettings: RoundSettings) => {
     saveReverseTilt(nextSettings.reverseTilt);
@@ -139,14 +148,14 @@ function App() {
   const startGame = useCallback(() => {
     motion.resetActions();
     setRoundResult(null);
-    setScreen("game");
+    dispatchFlow({ type: "start-game" });
   }, [motion.resetActions]);
 
   const continueToRound = useCallback(
     (destination: RoundStartDestination) => {
       if (destination === "forehead-setup") {
         motion.beginForeheadSetup();
-        setScreen("forehead-setup");
+        dispatchFlow({ type: "continue-to-round", destination: "forehead-setup" });
       } else {
         if (
           tiltModeEnabled &&
@@ -154,7 +163,7 @@ function App() {
         ) {
           motion.startCalibration();
         }
-        setScreen("countdown");
+        dispatchFlow({ type: "continue-to-round", destination: "countdown" });
       }
     },
     [
@@ -168,7 +177,7 @@ function App() {
   const cancelPreGame = useCallback(() => {
     void roundDisplay.release();
     motion.resetCalibration();
-    setScreen("setup");
+    dispatchFlow({ type: "cancel-pre-game" });
   }, [motion.resetCalibration, roundDisplay.release]);
   const finishCountdown = useCallback(() => {
     if (
@@ -195,8 +204,7 @@ function App() {
   const startWhenLandscape = useCallback(
     (destination: RoundStartDestination, cancelScreen: Screen) => {
       if (isPortrait) {
-        setPendingStart({ destination, cancelScreen });
-        setScreen("landscape-gate");
+        dispatchFlow({ type: "request-round-start", destination, cancelScreen, isPortrait });
         return;
       }
 
@@ -211,7 +219,7 @@ function App() {
     }
 
     const { destination } = pendingStart;
-    setPendingStart(null);
+    dispatchFlow({ type: "landscape-ready" });
     continueToRound(destination);
   }, [continueToRound, isPortrait, pendingStart, screen]);
 
@@ -253,7 +261,7 @@ function App() {
     }
     setSelectedDeckId(deckId);
     updateSettings({ ...settings, deckId, subcategoryFilter: "" });
-    setScreen(teamSession ? "team-turn" : "setup");
+    dispatchFlow({ type: "choose-deck", teamActive: Boolean(teamSession) });
   };
 
   const chooseMixedDeck = (sourceDecks: Deck[], label: string) => {
@@ -263,13 +271,13 @@ function App() {
       description: `A shuffled mix of ${label.toLocaleLowerCase()} decks.`,
       category: label,
       builtIn: true,
-      classroomSafe: sourceDecks.every((source) => source.classroomSafe),
+      classroomSafe: sourceDecks.every((source) => source.classroomSafe !== false),
       cards: sourceDecks.flatMap((source) => source.cards.map((card) => ({ ...card, id: `${source.id}-${card.id}` }))),
     };
     setVirtualDeck(deck);
     setSelectedDeckId(deck.id);
     updateSettings({ ...settings, deckId: deck.id, subcategoryFilter: "" });
-    setScreen(teamSession ? "team-turn" : "setup");
+    dispatchFlow({ type: "choose-deck", teamActive: Boolean(teamSession) });
   };
 
   const toggleFavoriteDeck = (deckId: string) => {
@@ -278,6 +286,11 @@ function App() {
       : [...favoriteDeckIds, deckId];
     setFavoriteDeckIds(next);
     saveFavoriteDecks(next);
+  };
+
+  const updateClassroomOnly = (value: boolean) => {
+    setClassroomOnly(value);
+    saveClassroomOnly(value);
   };
 
   const playAgain = () => {
@@ -297,198 +310,108 @@ function App() {
     startWhenLandscape("countdown", "results");
   };
 
-  if (screen === "home") {
-    return (
-      <>
-      <HomeScreen
-        onPlay={() => {
-          setGameMode("quick");
-          setTeamSession(null);
-          setScreen("decks");
-        }}
-        onTeamGame={() => setScreen("team-setup")}
-        onHistory={() => setScreen("history")}
-        onEditDecks={() => setScreen("editor")}
-        onHowToPlay={() => setScreen("how-to-play")}
-      />
-      <PwaBanner online={pwa.online} canInstall={pwa.canInstall} updateReady={pwa.updateReady} showIosInstallHint={pwa.showIosInstallHint} onInstall={() => void pwa.install()} onUpdate={pwa.update} onDismissIosInstallHint={pwa.dismissIosInstallHint} storageAvailable={storageAvailable} />
-      </>
-    );
-  }
+  const clearHistory = () => {
+    clearRoundHistory();
+    setHistory([]);
+  };
 
-  if (screen === "history") {
-    return <HistoryScreen history={history} onClear={() => {
-      clearRoundHistory();
-      setHistory([]);
-    }} onBack={() => setScreen("home")} />;
-  }
+  const startQuickGame = () => {
+    setGameMode("quick");
+    setTeamSession(null);
+    goToScreen("decks");
+  };
 
-  if (screen === "team-setup") {
-    return <TeamSetupScreen onStart={(session) => {
-      setGameMode("teams");
-      setTeamSession(session);
-      setScreen("decks");
-    }} onBack={() => setScreen("home")} />;
-  }
+  const startTeamGame = (session: TeamSession) => {
+    setGameMode("teams");
+    setTeamSession(session);
+    goToScreen("decks");
+  };
 
-  if (screen === "team-turn" && teamSession) {
-    return <TeamTurnScreen session={teamSession} onReady={() => setScreen("setup")} onQuit={() => {
-      setTeamSession(null);
-      setGameMode("quick");
-      setScreen("home");
-    }} />;
-  }
+  const quitTeamGame = () => {
+    setTeamSession(null);
+    setGameMode("quick");
+    goToScreen("home");
+  };
 
-  if (screen === "team-results" && teamSession) {
-    return <TeamResultsScreen session={teamSession} onHome={() => {
-      setTeamSession(null);
-      setGameMode("quick");
-      setScreen("home");
-    }} onPlayAgain={() => setScreen("team-setup")} />;
-  }
+  const resetMotionDiagnostics = () => {
+    motion.resetCalibration();
+    motion.resetActions();
+  };
 
-  if (screen === "motion-test") {
-    return <MotionDiagnosticScreen permission={motion.permission} status={motion.status} sample={motion.currentSample} baseline={motion.baseline} action={motion.lastAction} error={motion.error} onEnable={motion.requestPermission} onStartCalibration={motion.startCalibration} onFinishCalibration={motion.finishCalibration} onReset={() => {
-      motion.resetCalibration();
-      motion.resetActions();
-    }} onBack={() => {
-      motion.resetCalibration();
-      motion.resetActions();
-      setScreen("setup");
-    }} />;
-  }
+  const closeMotionDiagnostics = () => {
+    resetMotionDiagnostics();
+    goToScreen("setup");
+  };
 
-  if (screen === "how-to-play") {
-    return <HowToPlayScreen onBack={() => setScreen("home")} />;
-  }
+  const cancelLandscapeGate = () => {
+    void roundDisplay.release();
+    motion.resetCalibration();
+    dispatchFlow({ type: "cancel-landscape" });
+  };
 
-  if (screen === "decks") {
-    return (
-      <DeckSelectScreen
-        builtInDecks={builtInDecks}
-        customDecks={customDecks}
-        onSelect={chooseDeck}
-        onBack={() => setScreen("home")}
-        onEditDecks={() => setScreen("editor")}
-        favoriteDeckIds={favoriteDeckIds}
-        recentDeckIds={history.map(({ deckId }) => deckId).slice(0, 6)}
-        onToggleFavorite={toggleFavoriteDeck}
-        onSelectMixed={chooseMixedDeck}
-      />
-    );
-  }
+  const finishRound = (result: RoundResult) => {
+    void roundDisplay.release();
+    const nextHistory = addRoundToHistory(result);
+    setHistory(nextHistory);
+    setRoundResult(result);
+    if (teamSession) {
+      const nextSession = addTeamRound(teamSession, result);
+      setTeamSession(nextSession);
+      dispatchFlow({ type: "round-ended", teamComplete: isTeamSessionComplete(nextSession) });
+    } else {
+      dispatchFlow({ type: "round-ended", teamComplete: false });
+    }
+  };
 
-  if (screen === "setup") {
-    return (
-      <RoundSetupScreen
-        deck={selectedDeck}
-        settings={settings}
-        motionError={motion.error}
-        onSettingsChange={updateSettings}
-        onStartRound={startRound}
-        onContinueWithoutMotion={continueWithoutMotion}
-        onChooseDeck={() => setScreen("decks")}
-        onTestMotion={() => setScreen("motion-test")}
-      />
-    );
-  }
+  const quitRound = () => {
+    void roundDisplay.release();
+    motion.resetActions();
+    setRoundResult(null);
+    goToScreen("setup");
+  };
 
-  if (screen === "landscape-gate") {
-    return (
-      <LandscapeGateScreen
-        onCancel={() => {
-          void roundDisplay.release();
-          motion.resetCalibration();
-          setScreen(pendingStart?.cancelScreen ?? "setup");
-          setPendingStart(null);
-        }}
-      />
-    );
-  }
-
-  if (screen === "forehead-setup") {
-    return (
-      <ForeheadSetupScreen
-        movementDetected={motion.foreheadMovementDetected}
-        soundEnabled={settings.soundEnabled}
-        vibrationEnabled={settings.vibrationEnabled}
-        onReady={beginCountdown}
-        onCancel={cancelPreGame}
-      />
-    );
-  }
-
-  if (screen === "countdown") {
-    return (
-      <CountdownScreen
-        reverseTilt={settings.reverseTilt}
-        showTiltHint={tiltModeEnabled}
-        onComplete={finishCountdown}
-        onCancel={cancelPreGame}
-      />
-    );
-  }
-
-  if (screen === "game") {
-    return (
-      <GameScreen
-        deck={selectedDeck}
-        settings={settings}
-        motionStatus={motion.status}
-        motionAction={motion.lastAction}
-        gameMode={gameMode}
-        teamId={teamSession ? getActiveTeam(teamSession).id : undefined}
-        teamName={teamSession ? getActiveTeam(teamSession).name : undefined}
-        playerName={teamSession ? getActivePlayer(teamSession) : undefined}
-        onRoundEnd={(result) => {
-          void roundDisplay.release();
-          const nextHistory = addRoundToHistory(result);
-          setHistory(nextHistory);
-          setRoundResult(result);
-          if (teamSession) {
-            const nextSession = addTeamRound(teamSession, result);
-            setTeamSession(nextSession);
-            setScreen(isTeamSessionComplete(nextSession) ? "team-results" : "results");
-          } else {
-            setScreen("results");
-          }
-        }}
-        onQuit={() => {
-          void roundDisplay.release();
-          motion.resetActions();
-          setRoundResult(null);
-          setScreen("setup");
-        }}
-        notice={gameNotice}
-      />
-    );
-  }
-
-  if (screen === "results" && roundResult) {
-    return (
-      <EndRoundScreen
-        result={roundResult}
-        onPlayAgain={playAgain}
-        onChooseDeck={() => setScreen("decks")}
-        onHome={() => setScreen("home")}
-        onNextRound={teamSession ? () => setScreen("team-turn") : undefined}
-        teamName={roundResult.teamName}
-        bestScore={getBestScore(history, roundResult.deckId)}
-      />
-    );
-  }
-
-  if (screen === "editor") {
-    return (
-      <DeckEditor
-        customDecks={customDecks}
-        onDecksChange={setCustomDecks}
-        onBack={() => setScreen("home")}
-      />
-    );
-  }
-
-  return null;
+  return (
+    <AppScreens
+      screen={screen}
+      customDecks={customDecks}
+      selectedDeck={selectedDeck}
+      settings={settings}
+      motion={motion}
+      roundDisplay={roundDisplay}
+      tiltModeEnabled={tiltModeEnabled}
+      gameMode={gameMode}
+      teamSession={teamSession}
+      roundResult={roundResult}
+      history={history}
+      favoriteDeckIds={favoriteDeckIds}
+      classroomOnly={classroomOnly}
+      gameNotice={gameNotice}
+      frame={withPwaBanner}
+      onClearHistory={clearHistory}
+      onGoToScreen={goToScreen}
+      onHomePlay={startQuickGame}
+      onTeamStart={startTeamGame}
+      onTeamQuit={quitTeamGame}
+      onMotionReset={resetMotionDiagnostics}
+      onMotionBack={closeMotionDiagnostics}
+      onChooseDeck={chooseDeck}
+      onChooseMixedDeck={chooseMixedDeck}
+      onToggleFavorite={toggleFavoriteDeck}
+      onClassroomOnlyChange={updateClassroomOnly}
+      onSettingsChange={updateSettings}
+      onStartRound={startRound}
+      onContinueWithoutMotion={continueWithoutMotion}
+      onCancelLandscape={cancelLandscapeGate}
+      onBeginCountdown={beginCountdown}
+      onCancelPreGame={cancelPreGame}
+      onFinishCountdown={finishCountdown}
+      onRoundEnd={finishRound}
+      onQuitRound={quitRound}
+      onPlayAgain={playAgain}
+      onNextTeamRound={() => dispatchFlow({ type: "team-next-round" })}
+      onDecksChange={setCustomDecks}
+    />
+  );
 }
 
 export default App;

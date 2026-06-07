@@ -10,7 +10,9 @@ interface DeckSelectScreenProps {
   onBack: () => void;
   onEditDecks: () => void;
   favoriteDeckIds: string[];
+  classroomOnly: boolean;
   recentDeckIds: string[];
+  onClassroomOnlyChange: (value: boolean) => void;
   onToggleFavorite: (deckId: string) => void;
   onSelectMixed: (decks: Deck[], label: string) => void;
 }
@@ -37,6 +39,12 @@ function DeckCard({
   onSelect: (id: string) => void;
   onToggleFavorite: (id: string) => void;
 }) {
+  const metadataLabels = [
+    deck.subject,
+    deck.ageRange,
+    deck.classroomSafe === true ? "Classroom safe" : null,
+  ].filter((label): label is string => Boolean(label));
+
   return (
     <article className="deck-card-shell">
       <button
@@ -48,6 +56,15 @@ function DeckCard({
         <span className="deck-card__type">{deck.builtIn ? deck.category ?? "Built-in deck" : "Custom deck"}</span>
         <strong>{deck.name}</strong>
         <span>{deck.description ?? "Your custom guessing deck."}</span>
+        {metadataLabels.length > 0 && (
+          <span className="deck-card__metadata" aria-label={`${deck.name} metadata`}>
+            {metadataLabels.map((label) => (
+              <span className="deck-card__metadata-label" key={label}>
+                {label}
+              </span>
+            ))}
+          </span>
+        )}
         {recent && <small>Recently played</small>}
       </button>
       <button
@@ -72,16 +89,26 @@ export function DeckSelectScreen({
   onBack,
   onEditDecks,
   favoriteDeckIds,
+  classroomOnly,
   recentDeckIds,
+  onClassroomOnlyChange,
   onToggleFavorite,
   onSelectMixed,
 }: DeckSelectScreenProps) {
+  const availableBuiltInDecks = useMemo(
+    () => builtInDecks.filter((deck) => !classroomOnly || deck.classroomSafe !== false),
+    [builtInDecks, classroomOnly],
+  );
   const categories = useMemo(
     () =>
       Array.from(
-        new Set(builtInDecks.map((deck) => deck.category).filter((category): category is string => Boolean(category))),
+        new Set(
+          availableBuiltInDecks
+            .map((deck) => deck.category)
+            .filter((category): category is string => Boolean(category)),
+        ),
       ),
-    [builtInDecks],
+    [availableBuiltInDecks],
   );
   const [selectedCategory, setSelectedCategory] = useState(() => categories[0] ?? ALL_CATEGORIES);
   const [query, setQuery] = useState("");
@@ -89,16 +116,16 @@ export function DeckSelectScreen({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const categoryBuiltInDecks =
     selectedCategory === ALL_CATEGORIES
-      ? builtInDecks
-      : builtInDecks.filter((deck) => deck.category === selectedCategory);
+      ? availableBuiltInDecks
+      : availableBuiltInDecks.filter((deck) => deck.category === selectedCategory);
   const normalizedQuery = query.trim().toLocaleLowerCase();
   const matchesSearch = (deck: Deck) =>
     !normalizedQuery ||
-    `${deck.name} ${deck.description ?? ""} ${(deck.tags ?? []).join(" ")}`
+    `${deck.name} ${deck.description ?? ""} ${deck.subject ?? ""} ${deck.ageRange ?? ""} ${(deck.tags ?? []).join(" ")}`
       .toLocaleLowerCase()
       .includes(normalizedQuery);
   const searchIsActive = Boolean(normalizedQuery);
-  const builtInDeckSearchBase = searchIsActive ? builtInDecks : categoryBuiltInDecks;
+  const builtInDeckSearchBase = searchIsActive ? availableBuiltInDecks : categoryBuiltInDecks;
   const visibleBuiltInDecks = builtInDeckSearchBase.filter(matchesSearch);
   const visibleCustomDecks = customDecks.filter(matchesSearch);
   const surpriseCandidates = [...visibleBuiltInDecks, ...visibleCustomDecks];
@@ -116,6 +143,12 @@ export function DeckSelectScreen({
       searchInputRef.current?.focus();
     }
   }, [searchOpen]);
+
+  useEffect(() => {
+    if (selectedCategory !== ALL_CATEGORIES && !categories.includes(selectedCategory)) {
+      setSelectedCategory(categories[0] ?? ALL_CATEGORIES);
+    }
+  }, [categories, selectedCategory]);
 
   const closeSearch = () => {
     setQuery("");
@@ -197,6 +230,14 @@ export function DeckSelectScreen({
             )}
           </div>
           <div className="deck-toolbar__actions">
+            <label className="deck-safe-toggle">
+              <input
+                type="checkbox"
+                checked={classroomOnly}
+                onChange={(event) => onClassroomOnlyChange(event.currentTarget.checked)}
+              />
+              <span>Classroom-safe decks only</span>
+            </label>
             <button
               className="button button--secondary button--small"
               type="button"

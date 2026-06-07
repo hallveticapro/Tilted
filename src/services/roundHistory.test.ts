@@ -43,4 +43,50 @@ describe("roundHistory", () => {
     expect(localStorage.getItem("tilted.roundHistory.v1")).not.toContain("Period 3");
     expect(exportHistoryCsv([teamRound], { includeNames: true })).toContain("Student 1");
   });
+
+  it("drops malformed stored card payloads and rewrites sanitized history", () => {
+    const storedRound = {
+      ...result,
+      correctCards: [
+        { id: "valid", prompt: "Valid prompt" },
+        { id: "bad", prompt: 42 },
+      ],
+      passedCards: [
+        { id: "passed", prompt: "Passed prompt" },
+        { id: "bad-passed", prompt: null },
+      ],
+    };
+    localStorage.setItem("tilted.roundHistory.v1", JSON.stringify([storedRound]));
+
+    expect(loadRoundHistory()).toEqual([
+      expect.objectContaining({
+        correctCards: [{ id: "valid", prompt: "Valid prompt" }],
+        passedCards: [{ id: "passed", prompt: "Passed prompt" }],
+      }),
+    ]);
+    expect(localStorage.getItem("tilted.roundHistory.v1")).not.toContain("\"prompt\":42");
+    expect(localStorage.getItem("tilted.roundHistory.v1")).not.toContain("\"prompt\":null");
+  });
+
+  it("drops malformed stored outcomes", () => {
+    const storedRound = {
+      ...result,
+      outcomes: [
+        { card: { id: "valid", prompt: "Valid prompt" }, outcome: "correct" },
+        { card: { id: "bad-card", prompt: 42 }, outcome: "correct" },
+        { card: { id: "bad-outcome", prompt: "Wrong result" }, outcome: "skip" },
+      ],
+    };
+    localStorage.setItem("tilted.roundHistory.v1", JSON.stringify([storedRound]));
+
+    expect(loadRoundHistory()).toEqual([
+      expect.objectContaining({
+        outcomes: [
+          { card: { id: "valid", prompt: "Valid prompt" }, outcome: "correct" },
+        ],
+      }),
+    ]);
+    expect(localStorage.getItem("tilted.roundHistory.v1")).not.toContain("bad-card");
+    expect(localStorage.getItem("tilted.roundHistory.v1")).not.toContain("bad-outcome");
+  });
 });

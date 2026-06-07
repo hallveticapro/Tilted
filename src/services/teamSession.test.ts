@@ -35,6 +35,12 @@ describe("teamSession", () => {
     expect(getActivePlayer(session)).toBe("Rin");
   });
 
+  it("uses the team name as the active player when no roster is provided", () => {
+    const session = createTeamSession(["Red", "Blue"], 6, null);
+
+    expect(getActivePlayer(session)).toBe("Red");
+  });
+
   it("keeps scores separate when teams use the same display name", () => {
     let session = createTeamSession(["Same", "Same"], 2, null);
     session = addTeamRound(session, result("Same", 2, session.teams[0].id));
