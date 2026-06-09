@@ -13,7 +13,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM nginxinc/nginx-unprivileged:stable-alpine@sha256:0a1e718ff1e1a22fc519d0c2e5b6872681f01e37c8a2817ec43ce6e716103929
+FROM nginxinc/nginx-unprivileged:stable-alpine@sha256:37f356a5eba5d187365b4f59cd6cc29f1f922ad18146d554b576a80983377e6a
 
 COPY --chown=nginx:nginx deploy/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --chown=nginx:nginx deploy/40-runtime-metadata.sh /docker-entrypoint.d/40-runtime-metadata.sh
