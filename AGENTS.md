@@ -18,17 +18,10 @@ Repository evidence wins over prior agent memory. Keep docs concise and current;
 
 ## Repository Map
 
-- `src/App.tsx`: screen flow, round startup, history persistence, and team-session transitions.
-- `src/components/`: screen-level UI for deck selection, setup, game, history, teams, PWA status, and deck editing.
-- `src/components/deck-editor/`: extracted Deck Workshop sections and `useDeckWorkshop`.
-- `src/hooks/`: timer, motion controls, landscape detection, PWA status, wake/fullscreen helpers.
-- `src/services/`: LocalStorage wrappers, deck validation/import/export, sharing, audio, preferences, team sessions, history export, and app-flow helpers.
-- `src/data/`: built-in deck seeds and generated built-in decks.
-- `public/`: static assets, manifest, service worker, and static-host headers.
-- `deploy/`: Nginx config and Docker runtime metadata injection.
-- `.github/`: CI, container publishing, and Dependabot configuration.
-- `scripts/`: static bundle, production, service-worker, and container verification.
-- `tests/e2e/`: Playwright smoke coverage.
+- `src/`: React screens, hooks, services, data, and shared helpers. Start with `src/App.tsx` and inspect the relevant feature boundary.
+- `public/`: static/PWA assets; `deploy/`: Nginx and runtime metadata.
+- `scripts/` and `tests/e2e/`: static, container, and browser verification.
+- `.github/`: CI, publishing, and Dependabot configuration.
 
 ## Common Commands
 
@@ -109,8 +102,7 @@ Do not commit secrets. The app should work without private environment values. D
 
 ## Known Follow-Ups
 
-- Production `/sw.js` has previously been observed with `Cache-Control: max-age=14400`; verify after deployment or CDN changes with `npm run audit:production`.
-- Production HSTS includes `includeSubDomains; preload`; confirm that remains intentional for the whole domain.
+- After deployment or CDN changes, run `npm run audit:production` to verify headers, `/healthz`, metadata, and service-worker caching.
 - Real-device motion/PWA behavior and projector readability still need classroom-device testing.
 
 ## Future Agent Notes
