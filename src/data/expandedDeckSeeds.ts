@@ -127,6 +127,23 @@ export const expandedDeckSeeds: PromptDeckSeed[] = [
     prompts: ["Cheeseburger", "Chicken sandwich", "Onion rings", "Mozzarella sticks", "Nachos", "Fried chicken", "Baked potato", "Meatballs", "Chicken wings", "Mashed potatoes", "Fish sticks", "Corn dog"],
   },
   {
+    id: "restaurants",
+    name: "Restaurants",
+    category: "Food & Everyday",
+    prompts: [
+      "McDonald's", "Chick-fil-A", "Panda Express", "Chipotle", "Chili's", "Applebee's",
+      "Burger King", "Wendy's", "Taco Bell", "KFC", "Popeyes", "Sonic Drive-In",
+      "Arby's", "Dairy Queen", "Jack in the Box", "Whataburger", "In-N-Out Burger",
+      "Five Guys", "Shake Shack", "Culver's", "Raising Cane's", "Zaxby's", "Bojangles",
+      "Subway", "Jersey Mike's", "Jimmy John's", "Firehouse Subs", "Panera Bread",
+      "Qdoba", "Moe's Southwest Grill", "CAVA", "Wingstop", "Noodles & Company",
+      "Domino's", "Pizza Hut", "Papa Johns", "Little Caesars", "Olive Garden",
+      "Red Lobster", "Texas Roadhouse", "Outback Steakhouse", "LongHorn Steakhouse",
+      "The Cheesecake Factory", "Cracker Barrel", "IHOP", "Denny's", "Waffle House",
+      "Buffalo Wild Wings", "Red Robin", "P.F. Chang's",
+    ],
+  },
+  {
     id: "things-around-house",
     name: "Things Around the House",
     category: "Food & Everyday",
