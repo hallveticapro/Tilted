@@ -40,6 +40,7 @@ const promptDeckDescriptions: Record<string, string> = {
   "fruits-vegetables": "Fresh produce, lunchbox staples, and farmers market color.",
   "breakfast-foods": "Morning favorites for teams who can pantomime syrup convincingly.",
   "restaurant-foods": "Menu-board classics, side dishes, and drive-thru daydreams.",
+  restaurants: "Fast-food favorites, quick-service stops, and familiar sit-down restaurant chains.",
   "things-around-house": "Household objects hiding in plain sight until the timer starts.",
   "school-supplies": "Desk, backpack, and classroom tools for quick, familiar rounds.",
   "jobs-careers": "Uniforms, tools, and dream-job clues from all over town.",
