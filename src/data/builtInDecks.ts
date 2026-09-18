@@ -2,6 +2,8 @@ import type { Card, Deck, Difficulty } from "../types";
 import { getDeckPromptExpansions } from "./deckPromptExpansions";
 import { expandedDeckSeeds } from "./expandedDeckSeeds";
 
+import { studentRequestedDecks } from "./studentRequestedDecks";
+
 type SeedCard = Omit<Card, "id">;
 
 function makeCards(deckId: string, cards: SeedCard[]): Card[] {
@@ -289,4 +291,4 @@ export const builtInDecks: Deck[] = [
     ]),
   },
   ...expandedDeckSeeds.map(makePromptDeck),
-].map(expandDeck);
+].map(expandDeck).concat(studentRequestedDecks);

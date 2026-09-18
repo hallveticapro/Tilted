@@ -97,3 +97,27 @@ test("mobile landscape viewport smoke can reach the game screen", async ({ page 
 
   await expect(page.getByRole("region", { name: "Card Actions" })).toBeVisible({ timeout: 6_000 });
 });
+
+test("K-pop clues fit beneath song titles in mobile landscape and support touch scoring", async ({ page }) => {
+  await page.setViewportSize({ width: 667, height: 375 });
+  await gotoApp(page);
+  await page.getByRole("button", { name: "Quick Round" }).click();
+  await page.getByRole("button", { name: "Search Decks", exact: true }).click();
+  await page.getByRole("searchbox", { name: "Search Decks" }).fill("K-pop Song Clues");
+  await page.getByRole("button", { name: "K-pop Song Clues", exact: true }).click();
+  await page.getByRole("button", { name: "Tilt Off" }).click();
+  await page.getByRole("button", { name: "Start Round" }).click();
+  const clue = page.locator(".game-card__clue");
+  await expect(clue).toBeVisible({ timeout: 6_000 });
+  const cardBox = await page.locator(".game-card").boundingBox();
+  const clueBox = await clue.boundingBox();
+  const titleBox = await page.locator(".game-card h1").boundingBox();
+  expect(cardBox).not.toBeNull();
+  expect(clueBox).not.toBeNull();
+  expect(titleBox).not.toBeNull();
+  expect(titleBox!.y).toBeGreaterThanOrEqual(cardBox!.y);
+  expect(clueBox!.y).toBeGreaterThanOrEqual(titleBox!.y + titleBox!.height);
+  expect(clueBox!.y + clueBox!.height).toBeLessThanOrEqual(cardBox!.y + cardBox!.height);
+  await page.getByRole("button", { name: "Correct", exact: true }).click();
+  await expect(page.locator(".game-hud")).toContainText("Score1");
+});

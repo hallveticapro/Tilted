@@ -65,6 +65,7 @@ export function validateCard(value: unknown): Card {
   return {
     id: cleanOptionalString(value.id, "Card ID", MAX_ID_LENGTH) ?? createId("card"),
     prompt: cleanRequiredString(value.prompt, "Card prompt", MAX_PROMPT_LENGTH),
+    clue: cleanOptionalString(value.clue, "Card clue", MAX_HINT_LENGTH),
     answer: cleanOptionalString(value.answer, "Card hint", MAX_HINT_LENGTH),
     category: cleanOptionalString(value.category, "Card category", MAX_CATEGORY_LENGTH),
     difficulty: value.difficulty as Difficulty | undefined,
@@ -324,12 +325,13 @@ function escapeCsv(value = ""): string {
 
 export function exportDeckCsv(deck: Deck): string {
   return [
-    ["prompt", "hint", "category", "difficulty"],
+    ["prompt", "hint", "category", "difficulty", "clue"],
     ...deck.cards.map((card) => [
       card.prompt,
       card.answer ?? "",
       card.category ?? "",
       card.difficulty ?? "",
+      card.clue ?? "",
     ]),
   ]
     .map((row) => row.map(escapeCsv).join(","))
@@ -342,8 +344,8 @@ export function cardsFromCsv(text: string): Card[] {
   }
   const rows = parseCsvRows(text);
   const hasHeader = rows[0]?.[0].trim().toLocaleLowerCase() === "prompt";
-  const cards = (hasHeader ? rows.slice(1) : rows).map(([prompt, answer, category, difficulty]) =>
-    validateCard({ prompt, answer, category, difficulty: difficulty || undefined }),
+  const cards = (hasHeader ? rows.slice(1) : rows).map(([prompt, answer, category, difficulty, clue]) =>
+    validateCard({ prompt, answer, category, clue, difficulty: difficulty || undefined }),
   );
   if (cards.length > MAX_CARDS_PER_DECK) {
     throw new Error(`Import up to ${MAX_CARDS_PER_DECK} cards at a time.`);

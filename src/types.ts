@@ -4,6 +4,7 @@ export interface Card {
   id: string;
   prompt: string;
   answer?: string;
+  clue?: string;
   category?: string;
   difficulty?: Difficulty;
 }

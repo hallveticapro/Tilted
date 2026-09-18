@@ -36,6 +36,24 @@ describe("GameScreen", () => {
     vi.mocked(playOutcomeSound).mockClear();
   });
 
+  it("shows a visible clue below the title without revealing a hint", () => {
+    render(
+      <GameScreen
+        deck={{ id: "songs", name: "Songs", cards: [{ id: "song", prompt: "Touch", clue: "One of your five senses." }] }}
+        settings={settings}
+        motionStatus="off"
+        motionAction={null}
+        onRoundEnd={vi.fn()}
+        onQuit={vi.fn()}
+      />,
+    );
+    const title = screen.getByRole("heading", { name: "Touch" });
+    expect(title.nextElementSibling).toHaveTextContent("One of your five senses.");
+    expect(screen.queryByRole("button", { name: "Reveal Hint" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    expect(screen.queryByText("One of your five senses.")).not.toBeInTheDocument();
+  });
+
   it("creates a fresh randomized card order for every round", () => {
     const cards = [
       { id: "one", prompt: "One" },

@@ -287,7 +287,7 @@ export function GameScreen({
       </header>
       {notice && <p className="game-notice notice notice--warning">{notice}</p>}
 
-      <section className="game-card" aria-live="polite">
+      <section className={`game-card ${currentCard?.clue ? "game-card--with-clue" : ""}`} aria-live="polite">
         {isPaused ? (
           <div className="game-card__paused">
             <p>Round Paused</p>
@@ -304,6 +304,7 @@ export function GameScreen({
           <>
             <p className="game-card__category">{currentCard?.category ?? deck.name}</p>
             <h1 className={`game-card__prompt ${promptSizeClass}`}>{currentCard?.prompt}</h1>
+            {currentCard?.clue && <p className="game-card__clue">{currentCard.clue}</p>}
             {currentCard?.answer && (
               <div className="answer-reveal">
                 {showAnswer ? (
