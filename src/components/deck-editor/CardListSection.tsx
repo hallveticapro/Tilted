@@ -129,6 +129,22 @@ export function CardListSection({
             />
           </label>
           <label>
+            <span className="field-label">Visible Clue</span>
+            <input
+              value={card.clue ?? ""}
+              onChange={(event) =>
+                onUpdateDeck(
+                  {
+                    cards: selectedDeck.cards.map((candidate) =>
+                      candidate.id === card.id ? { ...candidate, clue: event.target.value } : candidate,
+                    ),
+                  },
+                  true,
+                )
+              }
+            />
+          </label>
+          <label>
             <span className="field-label">Optional Hint</span>
             <input
               value={card.answer ?? ""}

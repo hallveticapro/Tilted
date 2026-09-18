@@ -1,3 +1,4 @@
+2026-09-17: Added Harry Potter and three K-pop decks including KATSEYE, with visible original song clues and editable/importable clue text.
 2026-09-10: Added Restaurants under Food & Everyday with 50 fast-food, quick-service, and sit-down restaurant chains.
 2026-06-08: Aligned favicon link declarations with Chrome-friendly rounded favicon selection.
 2026-06-08: Restyled the classroom-safe deck filter to match deck toolbar controls and replaced the public favicon bundle assets.

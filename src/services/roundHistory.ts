@@ -12,6 +12,7 @@ function isStoredCard(value: unknown): value is Card {
   return (
     typeof card.id === "string" &&
     typeof card.prompt === "string" &&
+    (card.clue === undefined || typeof card.clue === "string") &&
     (card.answer === undefined || typeof card.answer === "string") &&
     (card.category === undefined || typeof card.category === "string") &&
     (card.difficulty === undefined ||
