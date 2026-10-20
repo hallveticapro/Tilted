@@ -1,3 +1,4 @@
+2026-10-19: Parallelized isolated CI checks while retaining the fail-closed verify context, ordered production-bundle verification, and complete browser coverage; timing and runner-cost measurement are documented in docs/ci.md.
 2026-09-17: Added Harry Potter and three K-pop decks including KATSEYE, with visible original song clues and editable/importable clue text.
 2026-09-10: Added Restaurants under Food & Everyday with 50 fast-food, quick-service, and sit-down restaurant chains.
 2026-06-08: Aligned favicon link declarations with Chrome-friendly rounded favicon selection.
