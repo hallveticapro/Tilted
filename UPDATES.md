@@ -1,3 +1,4 @@
+2026-11-02: Pinned browser CI to Ubuntu 24.04 so Playwright 1.60 can install Chromium after the ubuntu-latest runner upgrade.
 2026-10-19: Parallelized isolated CI checks while retaining the fail-closed verify context, ordered production-bundle verification, and complete browser coverage; timing and runner-cost measurement are documented in docs/ci.md.
 2026-09-17: Added Harry Potter and three K-pop decks including KATSEYE, with visible original song clues and editable/importable clue text.
 2026-09-10: Added Restaurants under Food & Everyday with 50 fast-food, quick-service, and sit-down restaurant chains.
